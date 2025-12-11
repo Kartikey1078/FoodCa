@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const API_URL = "http://localhost:6001/api/tags";
+const API_URL = "https://food-ca-xa3o.vercel.app/api/tags";
 
 export default function TagAdmin({ selectedTags = [], onTagsChange }) {
   const [tags, setTags] = useState([]);
