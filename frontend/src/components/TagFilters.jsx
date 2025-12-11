@@ -31,7 +31,7 @@ const TagFilters = ({ onTagSelect }) => {
   };
 
   return (
-    <div className="z-0 w-full bg-gradient-to-r from-[#f8fcfb] to-[#eef7f6] py-4 px-4 shadow-md sticky top-0 z-20 border-b border-[#d5e7e4]">
+    <div className="z-0 w-full bg-gradient-to-r from-[#f8fcfb] to-[#eef7f6] py-4 px-4 shadow-md sticky top-0 z-20 border-b border-[#d5e7e4]" style={{zIndex:"0"}}>
       <div className="z-0 flex flex-wrap gap-3 justify-center">
         {tags.map((tag) => (
           <button
