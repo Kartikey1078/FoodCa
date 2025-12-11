@@ -1,0 +1,182 @@
+"use client";
+import React, { useState } from "react";
+import { Search } from "lucide-react";
+import MealFilter from "@/app/components/Recipe/MealFilter";
+import Navbar from "@/app/components/navbar";
+import Footer from "@/app/components/Footer/footer";
+import ContactSection from "@/app/components/Footer/QueryBox";
+import FAQs from "@/app/components/faqs";
+import { PlanResponse } from "@/types/plan";
+import { useRouter } from "next/navigation";
+import moment from "moment";
+import { MealPlanMealSelectionComponent } from "@/types/order";
+import { setWeeklyMenu } from "@/lib/stores/orderSlice";
+import { WeeklyMenuResponse } from "@/types/weeklyMenu";
+import { useAppDispatch, useAppSelector } from "@/lib/hooks";
+import weeklyMenuApi from "@/api/weeklyMenuApi";
+import MealCard from "@/app/components/mealcard2";
+import MealCard2 from "@/app/components/Recipe/MealCard";
+
+const Recipes: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const selectedPlan: PlanResponse = useAppSelector(
+    (state) => state.plan.selectedPlan
+  );
+  const router = useRouter();
+  const token = useAppSelector((state) => state.auth.token);
+  const mealSelections =
+    useAppSelector((state) => state.order.mealSelection) || [];
+
+  const date = moment();
+
+  const nextMonday = date
+    .clone()
+    .add(date.isoWeekday() >= 6 ? 14 : 7, "days")
+    .isoWeekday(1);
+
+  const [mealsSelected, setMealsSelected] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [meals, setMeals] = React.useState<WeeklyMenuResponse["data"]>([]);
+  const [filters, setFilters] = useState([{ label: "All (0)", value: "All" }]);
+  const [selectedFilter, setSelectedFilter] = useState("All");
+
+  const selectedMealsCount = mealSelections.reduce(
+    (total: number, meal: MealPlanMealSelectionComponent) => {
+      return total + (meal.qty || 0);
+    },
+    0
+  );
+  const minimumMeals = selectedPlan?.attributes?.minimum_meal_count || 0;
+  const remainingMeals = Math.max(0, minimumMeals - selectedMealsCount);
+
+  React.useEffect(() => {
+    dispatch(setWeeklyMenu(meals[0]?.id));
+    if (meals[0]?.attributes?.catalogs?.data) {
+      const categoryCount = new Map();
+      categoryCount.set("All", 0);
+
+      meals[0].attributes.catalogs.data.forEach((meal) => {
+        categoryCount.set("All", categoryCount.get("All") + 1);
+
+        meal?.attributes.categories.data?.forEach((category) => {
+          const categoryName = category.attributes.category_title;
+          const currentCount = categoryCount.get(categoryName) || 0;
+          categoryCount.set(categoryName, currentCount + 1);
+        });
+      });
+
+      const dynamicFilters = Array.from(categoryCount).map(
+        ([category, count]) => ({
+          label: `${category} (${count})`,
+          value: category,
+        })
+      );
+
+      setFilters(dynamicFilters);
+    }
+  }, [meals]);
+
+  const getWeeklyMenu = async () => {
+    console.log(nextMonday.format("YYYY-MM-DD"));
+    const response = await weeklyMenuApi.getMenu(
+      nextMonday.format("YYYY-MM-DD")
+    );
+    // @ts-ignore
+    setMeals(response.data.data);
+  };
+
+  React.useEffect(() => {
+    getWeeklyMenu();
+  }, []);
+
+  const handleMealSelection = (isSelected: boolean) => {
+    setMealsSelected(isSelected);
+  };
+
+  const getFilteredMeals = () => {
+    if (!meals[0]?.attributes?.catalogs?.data) return [];
+
+    const catalogData = meals[0].attributes.catalogs.data;
+
+    if (selectedFilter === "All") {
+      return catalogData;
+    }
+
+    return catalogData.filter((meal) =>
+      meal.attributes.categories.data.some(
+        (category) => category.attributes.category_title === selectedFilter
+      )
+    );
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      <div className="flex-grow bg-[#FAFAFA]">
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="flex justify-between px-2 py-4 lg:hidden">
+            <h1 className="text-[18px] font-normal font-redHatDisplay">
+              Recipes
+            </h1>
+            <div className="relative w-[200px] sm:w-64 md:w-80 lg:w-72 mx-auto sm:mx-0 mr-0">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search dish"
+                className="w-full px-2 sm:px-3 md:px-4 py-1.5 sm:py-1.5 md:py-2 pr-8 sm:pr-10 rounded-full border border-[#F2790F] text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#F2790F] focus:border-transparent"
+              />
+              <button className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                <Search size={16} className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+            </div>
+          </div>
+          <MealFilter />
+
+          <div className="p-4 md:p-6 lg:p-8 font-redHatDisplay">
+            <div className="container mx-auto">
+              <div className="flex flex-col space-y-4  sm:justify-self-center md:justify-center md:flex-row md:items-center  lg:justify-center">
+                {/* Filter Buttons */}
+                <div className="flex overflow-x-auto gap-2 w-full md:w-auto md:flex-nowrap no-scrollbar">
+                  {filters.map((filter) => (
+                    <button
+                      key={filter.value}
+                      onClick={() => setSelectedFilter(filter.value)}
+                      className={`px-3 py-1.5 rounded-full font-redHatDisplay font-medium tracking-wide text-xs sm:text-xl border  whitespace-nowrap transition-colors duration-200 ${
+                        selectedFilter === filter.value
+                          ? "bg-BM_Green text-white border-BM_Green"
+                          : "text-[#858585] border-[#858585]"
+                      }`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Meal Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 container mx-auto px-4 mt-4">
+            {getFilteredMeals().map(
+              (
+                meal: WeeklyMenuResponse["data"][0]["attributes"]["catalogs"]["data"][0]
+              ) => (
+                <MealCard2
+                  key={meal.id}
+                  meal={meal}
+                  onSelect={handleMealSelection}
+                />
+              )
+            )}
+          </div>
+        </div>
+        <FAQs />
+        <ContactSection />
+      </div>
+      <Footer />
+    </div>
+  );
+};
+
+export default Recipes;

@@ -1,0 +1,336 @@
+"use client";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+// import { useRouter } from "next/router";
+import { useDispatch } from "react-redux";
+import {
+  addMealToOrder,
+  removeMealFromOrder,
+  updateMealSelection,
+} from "@/lib/stores/orderSlice";
+import Counter from "../counter";
+import { WeeklyMenuResponse } from "@/types/weeklyMenu";
+import { useAppSelector } from "@/lib/hooks";
+import { MealPlanMealSelectionComponent } from "@/types/order";
+import Popup from "../popup";
+
+
+
+interface MealCardProps {
+  meal: WeeklyMenuResponse["data"][0]["attributes"]["catalogs"]["data"][0]["attributes"];
+  id: number;  
+  onSelect: (isSelected: boolean) => void;
+}
+
+const MealCard2 = ({ meal, id, onSelect }: MealCardProps) => {
+  const dispatch = useDispatch();
+  const [selectedVariation, setSelectedVariation] = useState(
+    meal.variations[0]?.variation_name || ""
+  );
+  const [mealId, setMealId] = useState(
+    `${id}${selectedVariation?.replace(/\s/g, "")}`
+  );
+  const qty = useAppSelector(
+    (state) =>
+      state.order.mealSelection?.find(
+        (m: MealPlanMealSelectionComponent) => m.id === mealId
+      )?.qty || 0
+  );
+  const [isSelected, setIsSelected] = useState(false);
+
+  // Update mealId and fetch corresponding quantity from Redux when the variation changes
+  useEffect(() => {
+    const updatedMealId = `${id}${selectedVariation?.replace(/\s/g, "")}`;
+    setMealId(updatedMealId);
+  }, [id, selectedVariation]);
+
+  const handleVariationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedVariation(e.target.value);
+  };
+  const router = useRouter();
+
+  const [isPopupVisible, setPopupVisible] = useState(false);
+
+  const togglePopup = () => {
+    setPopupVisible(!isPopupVisible);
+  };
+
+  const transformNutritionData = (nutrients: typeof meal.Nutrients) => {
+    const transformedData = nutrients.map((nutrient) => {
+      const label = nutrient.nutrient_type.data.attributes.title;
+      const value = nutrient.value;
+      const subItems = nutrient.nutrient_sub_type.data
+        ? [
+            {
+              label: nutrient.nutrient_sub_type.data.attributes.title,
+              value: nutrient.value,
+            },
+          ]
+        : [];
+
+      return {
+        label,
+        value,
+        subItems,
+      };
+    });
+
+    return transformedData;
+  };
+
+  const handleMealSelection = () => {
+    const newIsSelected = !isSelected;
+    setIsSelected(newIsSelected);
+    onSelect(newIsSelected);
+  };
+
+  return (
+    <div
+      className={`min-w-full h-auto mx-auto my-3  md:my-20 bg-[#FEFAF5]  rounded-3xl p-4 py-6 flex flex-col space-y-4 relative  lg:border border-orange-400 justify-between`}
+      onClick={handleMealSelection}
+    >
+      {/* Image (Full Circular with Shadow) */}
+      <div className="w-full lg:mb-14">
+        <img
+          //@ts-ignore
+          src={
+            process.env.NEXT_PUBLIC_ROOT_URL + meal.image?.data?.attributes?.url
+          } // Replace with your image path
+          alt="Meal"
+          className="absolute w-[200px] h-[200px] top-[-130px] left-[30%] translate-x-[-50%] rounded-full shadow-md shadow-[#cd9f86] hidden lg:block object-cover"
+          style={{
+            boxShadow: "0px 4px 15px 0px #cd9f86",
+          }}
+        />
+        <div className="flex">
+          <img
+            //@ts-ignore
+            src={
+              process.env.NEXT_PUBLIC_ROOT_URL +
+              meal.image?.data?.attributes?.url
+            } // Replace with your image path
+            alt="Meal"
+            className="w-[140px] h-[140px] rounded-full shadow-md shadow-[#cd9f86] lg:hidden block object-cover"
+            style={{
+              boxShadow: "0px 4px 15px 0px #cd9f86",
+            }}
+          />
+          {/* Nutritional Info */}
+          <div className="flex justify-start items-center flex-col w-full text-sm text-gray-700 lg:hidden gap-y-1 ">
+            <div className="flex flex-row items-center justify-center w-[25%] space-y-1 gap-x-1">
+              <img src="/Kcal.svg" alt="kcal" className="w-4 h-4" />
+              <div className="flex flex-row items-center w-full pl-1">
+                <span className="font-black font-redHatDisplay text-xs lg:text-[12px]">
+                  {meal.nutritions.find((n) => n.nutrtion_symbol === "Kcal")
+                    ?.rating || "N/A"}
+                </span>
+                <span className="font-redHatDisplay font-normal rounded-full text-xs lg:text-[12px] w-full text-center my-[4px] pl-1">
+                  Kcal
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-row items-center justify-center w-[25%] space-y-1 gap-x-1">
+              <img src="/Protein.svg" alt="Protein" className="w-4 h-4" />
+              <div className="flex flex-row items-center w-full pl-1">
+                <span className="font-black font-redHatDisplay text-xs lg:text-[12px]">
+                  {meal.nutritions.find((n) => n.nutrtion_symbol === "Protein")
+                    ?.rating || "N/A"}
+                </span>
+                <span className="font-redHatDisplay rounded-full text-xs lg:text-[12px] w-full text-center my-[4px] pl-1">
+                  Protein
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-row items-center justify-center w-[25%] space-y-1 gap-x-1">
+              <img src="/Carbs.svg" alt="Carbs" className="w-4 h-4" />
+              <div className="flex flex-row items-center w-full">
+                <span className="font-black font-redHatDisplay text-xs lg:text-[12px] pl-1 text-nowrap">
+                  {meal.nutritions.find((n) => n.nutrtion_symbol === "Carbs")
+                    ?.rating || "N/A"}
+                </span>
+                <span className="font-redHatDisplay rounded-full text-xs lg:text-[12px] w-full text-center my-[4px] pl-1">
+                  Carbs
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-row items-center justify-center w-[25%] space-y-1 gap-x-1">
+              <img src="/Fats.svg" alt="Fats" className="w-4 h-4" />
+              <div className="flex flex-row items-center w-full pl-1">
+                <span className="font-black font-redHatDisplay text-xs lg:text-[12px]">
+                  {meal.nutritions.find((n) => n.nutrtion_symbol === "Fat")
+                    ?.rating || "N/A"}
+                </span>
+                <span className="font-redHatDisplay rounded-full text-xs lg:text-[12px] w-full text-center my-[4px] pl-1">
+                  Fat
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Spice & Info Badges */}
+      <div className="flex justify-between items-center w-full mb-2">
+        {/* Spice Badges - Far Left */}
+        <div className="flex gap-2">
+          {meal.tags.data.map((tag, index) => (
+            <span
+              key={index}
+              className="font-redHatDisplay px-3 py-1 text-xs lg:text-sm font-medium lg:font-bold tracking-wide rounded-full"
+              style={{ color: "white", backgroundColor: tag.attributes.color }}
+            >
+              {tag.attributes.name}
+            </span>
+          ))}
+        </div>
+
+        {/* Info Icons - Far Right */}
+        <div className="flex gap-3">
+          <span
+            onClick={() => router.push(`/plans/Recipe2/${id}`)}
+            className="cursor-pointer " 
+          >
+            <img
+              src="/recipe 1.svg"
+              alt="Search"
+              className="w-4 h-4 lg:w-5 lg:h-5"
+            />
+          </span>
+          <span className="cursor-pointer" onClick={togglePopup}>
+            <img
+              src="/info (2) 1.svg"
+              alt="Info"
+              className="w-4 h-4 lg:w-5 lg:h-5"
+            />
+          </span>
+        </div>
+      </div>
+      <Popup
+        isVisible={isPopupVisible}
+        onClose={togglePopup}
+        data={transformNutritionData(meal.Nutrients)}
+      />
+      {/* Title and Description */}
+      <div className="flex flex-col space-y-2">
+        <h2 className="font-redHatDisplay text-lg lg:text-xl font-black lg:font-bold text-gray-800">
+          {meal.name}
+        </h2>
+        <p className="font-redHatDisplay text-sm lg:text-lg text-gray-600 line-clamp-2">
+          {meal.description}
+        </p>
+      </div>
+
+      {/* Nutritional Info */}
+      <div className="lg:flex justify-around items-center w-full text-sm text-gray-700 space-x-2 pt-4 hidden ">
+        <div className="flex flex-col items-center justify-center w-[25%] space-y-1">
+          <img src="/Kcal.svg" alt="kcal" className="w-6 h-6" />
+          <div className="flex flex-col items-center w-full">
+            <span className=" font-redHatDisplay tracking-wide font-semibold text-red-500 bg-red-100 rounded-full text-sm lg:text-[16px] w-full text-center my-[4px]">
+              Kcal
+            </span>
+            <span className="font-bold font-redHatDisplay text-sm lg:text-sm -mt-1">
+              {meal.nutritions.find((n) => n.nutrtion_symbol === "Kcal")
+                ?.rating || "N/A"}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center justify-center w-[25%] space-y-1">
+          <img src="/Protein.svg" alt="Protein" className="w-6 h-6" />
+          <div className="flex flex-col items-center w-full">
+            <span className="font-redHatDisplay tracking-wide font-semibold text-[#D57A34] bg-[#ffefe2]  rounded-full text-sm lg:text-[16px] w-full text-center my-[4px]">
+              Protein
+            </span>
+            <span className="font-bold font-redHatDisplay text-sm lg:text-sm -mt-1">
+              {meal.nutritions.find((n) => n.nutrtion_symbol === "Protein")
+                ?.rating || "N/A"}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center justify-center w-[25%] space-y-1">
+          <img src="/Carbs.svg" alt="Carbs" className="w-6 h-6" />
+          <div className="flex flex-col items-center w-full">
+            <span className=" font-redHatDisplay tracking-wide font-semibold text-[#F2790F] bg-[#fae8d9] rounded-full text-sm lg:text-[16px] w-full text-center my-[4px]">
+              Carbs
+            </span>
+            <span className="font-bold font-redHatDisplay text-sm lg:text-sm -mt-1">
+              {meal.nutritions.find((n) => n.nutrtion_symbol === "Carbs")
+                ?.rating || "N/A"}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center justify-center w-[25%] space-y-1">
+          <img src="/Fats.svg" alt="Fats" className="w-6 h-6" />
+          <div className="flex flex-col items-center w-full">
+            <span className=" font-redHatDisplay tracking-wide font-semibold text-[#D0B114] bg-[#f5efd3] rounded-full text-sm lg:text-[16px] w-full text-center my-[4px]">
+              Fat
+            </span>
+            <span className="font-bold font-redHatDisplay text-sm lg:text-sm -mt-1">
+              {meal.nutritions.find((n) => n.nutrtion_symbol === "Fat")
+                ?.rating || "N/A"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Dropdown Button and Counter */}
+      <div className="flex justify-between items-center pt-4 mb-4 gap-2 bottom-0">
+        {meal.variations && meal.variations.length > 0 ? (
+          <>
+            <div className="relative w-auto max-w-[150px]">
+              <select
+                value={selectedVariation}
+                onChange={handleVariationChange}
+                className="w-full h-auto text-[#555555] text-sm lg:text-lg font-redHatDisplay rounded-full px-1 py-2 border border-[#38754E] appearance-none cursor-pointer pl-12 pr-6"
+              >
+                {meal.variations.map((variation, index) => (
+                  <option key={index} value={variation.variation_name}>
+                    {variation.variation_name}
+                  </option>
+                ))}
+              </select>
+              <span className="absolute left-1 top-1/2 transform -translate-y-1/2 bg-[#38754E] text-white w-8 h-8 rounded-full flex items-center justify-center">
+                <img src="/Bail.svg" alt="bails" className="w-4 h-4" />
+              </span>
+              <span className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                <img
+                  src="/angle-right (1) 1.svg"
+                  alt="Dropdown"
+                  className="w-2 h-3"
+                />
+              </span>
+            </div>
+            <Counter
+              initialValue={qty}
+              currentMealId={mealId}
+              mealData={{
+                name: meal.name,
+                variation: selectedVariation,
+                catalogId: id,
+              }}
+            />
+          </>
+        ) : (
+          <div className="flex justify-end w-full">
+            <Counter
+              initialValue={qty}
+              currentMealId={mealId}
+              mealData={{
+                name: meal.name,
+                variation: selectedVariation,
+                catalogId: id,
+              }}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default MealCard2;
