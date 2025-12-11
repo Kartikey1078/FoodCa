@@ -2,15 +2,15 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import express from 'express';
 
-import itemRoutes from '../routes/itemRoutes.js';
-import connectDB from '../config/db.js';
-import SelectPlan from "../routes/select_plan.js";
-import checkoutRoutes from '../routes/checkoutRoutes.js';
-import tagRoutes from "../routes/tagRoutes.js";
-import popRoutes from "../routes/popRoutes.js";
-import DeliveryDetailsRoutes from "../routes/DeliveryDetailsRoutes.js";
-import stripeRoutes from "../routes/stripeRoutes.js";
-import squareRoutes from "../routes/squareRoutes.js";
+import itemRoutes from './routes/itemRoutes.js';
+import connectDB from './config/db.js';
+import SelectPlan from "./routes/select_plan.js";
+import checkoutRoutes from './routes/checkoutRoutes.js';
+import tagRoutes from "./routes/tagRoutes.js";
+import popRoutes from "./routes/popRoutes.js";
+import DeliveryDetailsRoutes from "./routes/DeliveryDetailsRoutes.js";
+import stripeRoutes from "./routes/stripeRoutes.js";
+import squareRoutes from "./routes/squareRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -59,6 +59,5 @@ app.use("/api/deliverydetails", DeliveryDetailsRoutes);
 app.use("/api/stripe", stripeRoutes);
 app.use("/api/square", squareRoutes);
 
-// ❗IMPORTANT: Vercel serverless → DO NOT USE app.listen()
-// export Express app as a handler
+
 export default app;
