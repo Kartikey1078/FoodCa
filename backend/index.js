@@ -20,7 +20,7 @@ connectDB();
 const app = express();
 console.log("Loaded Stripe Key:", process.env.STRIPE_SECRET_KEY);
 const allowedOrigins = [
-  process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+  process.env.FRONTEND_ORIGIN || 'https://food-ca.vercel.app/',
   process.env.ADMIN_ORIGIN || 'http://localhost:5174',
 ];
 
