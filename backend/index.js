@@ -10,7 +10,7 @@ import popRoutes from "./routes/popRoutes.js";
 import DeliveryDetailsRoutes from "./routes/DeliveryDetailsRoutes.js"
 import stripeRoutes from "./routes/stripeRoutes.js";
 import squareRoutes from "./routes/squareRoutes.js";
-import upload from "./config/multer.js";
+
 
 
 
