@@ -318,8 +318,8 @@ const MenuPage = () => {
       try {
         setLoading(true);
         const url = selectedTag === "All" 
-          ? "http://localhost:6001/api/checkout"
-          : `http://localhost:6001/api/checkout/tags?tag=${encodeURIComponent(selectedTag)}`;
+          ? "https://food-ca-xa3o.vercel.app/api/checkout"
+          : `https://food-ca-xa3o.vercel.app/api/checkout/tags?tag=${encodeURIComponent(selectedTag)}`;
         
         const res = await fetch(url);
         const data = await res.json();

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import TagAdmin from "./TagAdmin"; // Adjust path to your TagAdmin component
 
-const API_URL = "http://localhost:6001/api/checkout";
+const API_URL = "https://food-ca-xa3o.vercel.app/api/checkout";
 
 export default function CheckOut() {
   const [items, setItems] = useState([]);

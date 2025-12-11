@@ -45,14 +45,14 @@ const DeliveryForm = () => {
 
       // 🔥 SAVE DELIVERY DETAILS IN DATABASE
       const saveRes = await axios.post(
-        "http://localhost:6001/api/deliverydetails",
+        "https://food-ca-xa3o.vercel.app/api/deliverydetails",
         form
       );
       console.log("Saved:", saveRes.data);
 
       // 🔥 CALL STRIPE CHECKOUT
       const stripeRes = await axios.post(
-        "http://localhost:6001/api/stripe/create-checkout-session",
+        "https://food-ca-xa3o.vercel.app/api/stripe/create-checkout-session",
         {
           amount,
           planName: selectedPlan.title,
