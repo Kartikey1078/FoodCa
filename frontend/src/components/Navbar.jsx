@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import { useCart } from "../context/CartContext";
 import { useLocation } from "react-router-dom";
@@ -7,6 +7,7 @@ import { useLocation } from "react-router-dom";
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const isCheckoutPage = location.pathname.startsWith("/checkout");
 
   const { cartCount, scrollToCart } = useCart();
@@ -22,7 +23,13 @@ const Navbar = () => {
     `flex flex-col items-center ${isActive ? "text-BM_Green" : "text-gray-600"}`;
 
   const handleCartClick = () => {
-    scrollToCart();
+    // If not on checkout page, navigate to checkout
+    if (!isCheckoutPage) {
+      navigate("/checkout");
+    } else {
+      // If already on checkout page, scroll to cart
+      scrollToCart();
+    }
     setMenuOpen(false);
   };
 

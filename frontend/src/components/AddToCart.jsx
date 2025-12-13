@@ -3,7 +3,7 @@ import { useCart } from "../context/CartContext";
 import { usePlan } from "../context/PlanContext";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
-
+import SplitMeal from "./SplitMeal";
 
 const AddToCart = () => {
   const [minMealError, setMinMealError] = useState("");
@@ -14,7 +14,8 @@ const AddToCart = () => {
   const goToDeliveryForm = () => {
     navigate("/delivery-form");
   };
-  const { items, clearCart, cartSectionRef, removeFromCart, updateQuantity } = useCart();
+  const { items, clearCart, cartSectionRef, removeFromCart, updateQuantity } =
+    useCart();
   const { selectedPlan } = usePlan();
 
   const hasItems = items.length > 0;
@@ -24,7 +25,8 @@ const AddToCart = () => {
     if (!plan) return {};
 
     return {
-      title: plan.attributes?.plan_title || plan.title || "Plan Title Not Found",
+      title:
+        plan.attributes?.plan_title || plan.title || "Plan Title Not Found",
       minMeals:
         Number(plan.attributes?.minimum_meal_count) ||
         Number(plan.numberOfMeals) ||
@@ -51,9 +53,7 @@ const AddToCart = () => {
 
   // ---- CALCULATE EXTRA MEALS ----
   const extraMeals =
-    totalMeals > planInfo.minMeals
-      ? totalMeals - planInfo.minMeals
-      : 0;
+    totalMeals > planInfo.minMeals ? totalMeals - planInfo.minMeals : 0;
 
   const extraMealCost = extraMeals * effectiveExtraMealPrice;
 
@@ -222,28 +222,31 @@ const AddToCart = () => {
       ) : (
         <>
           {/* -------------------- CART ITEMS -------------------- */}
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(260px,1fr))] lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] xl:grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-3 sm:gap-4 md:gap-5 w-full max-w-full">
             {items.map((item) => (
               <div
                 key={item.key}
-                className="flex items-start gap-3 border border-gray-100 rounded-2xl p-3"
+                className="grid grid-cols-[48px_1fr] sm:grid-cols-[56px_1fr] gap-2 sm:gap-3 border border-gray-100 rounded-lg sm:rounded-xl p-2.5 sm:p-3 md:p-3.5 bg-white shadow-sm hover:shadow-md transition-shadow min-w-0 w-full max-w-full overflow-hidden"
               >
+                {/* Image */}
                 {item.image && (
                   <img
                     src={item.image}
                     alt={item.title}
-                    className="w-14 h-14 rounded-xl object-cover border border-gray-100"
+                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg object-cover border border-gray-100 self-start"
                   />
                 )}
 
-                <div className="flex-1">
-                  <div className="flex justify-between gap-3">
-                    <div>
-                      <span className="text-sm font-semibold text-gray-900">
+                {/* Content */}
+                <div className="grid gap-1.5 sm:gap-2 min-w-0 w-full max-w-full overflow-hidden">
+                  {/* Title Row */}
+                  <div className="grid grid-cols-[1fr_auto] items-start gap-1.5 sm:gap-2 min-w-0">
+                    <div className="min-w-0 w-full overflow-hidden">
+                      <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate leading-tight">
                         {item.title}
-                      </span>
+                      </p>
                       {item.subtitle && (
-                        <p className="text-[11px] text-gray-400">
+                        <p className="text-[10px] sm:text-[11px] text-gray-400 truncate mt-0.5">
                           {item.subtitle}
                         </p>
                       )}
@@ -251,70 +254,51 @@ const AddToCart = () => {
 
                     <button
                       onClick={() => removeFromCart(item.key)}
-                      className="text-[11px] font-semibold text-rose-500 hover:text-rose-600"
+                      className="text-[10px] sm:text-[11px] font-semibold text-rose-500 hover:text-rose-600 transition-colors px-1 py-0.5 -mr-1"
+                      aria-label="Remove item"
                     >
                       Clear
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between mt-2">
-                    <div className="flex flex-wrap gap-2 items-center">
-                      {item.option && (
-                        <span className="text-emerald-600 font-semibold text-[12px]">
-                          Base: {item.option}
-                        </span>
-                      )}
-                    </div>
-                    
-                    {/* Quantity Controls */}
-                    <div className="flex items-center gap-2 border border-gray-200 rounded-lg">
+                  {/* Base + Quantity */}
+                  <div className="grid grid-cols-[1fr_auto] items-center gap-1.5 sm:gap-2 min-w-0">
+                    {item.option && (
+                      <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-600 truncate min-w-0 overflow-hidden">
+                        Base: {item.option}
+                      </span>
+                    )}
+
+                    <div className="flex items-center border border-gray-200 rounded-md overflow-hidden">
                       <button
                         onClick={() => updateQuantity(item.key, item.quantity - 1)}
-                        className="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded-l-lg transition-colors"
+                        className="px-1.5 sm:px-2 py-1 text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors text-xs sm:text-sm touch-manipulation"
                         aria-label="Decrease quantity"
                       >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M20 12H4"
-                          />
-                        </svg>
+                        −
                       </button>
-                      <span className="px-3 py-1 text-sm font-semibold text-gray-900 min-w-[2rem] text-center">
+                      <span className="px-1.5 sm:px-2 text-[10px] sm:text-xs font-semibold text-gray-900 min-w-[1.5rem] text-center">
                         {item.quantity}
                       </span>
                       <button
                         onClick={() => updateQuantity(item.key, item.quantity + 1)}
-                        className="px-2 py-1 text-gray-600 hover:bg-gray-100 rounded-r-lg transition-colors"
+                        className="px-1.5 sm:px-2 py-1 text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors text-xs sm:text-sm touch-manipulation"
                         aria-label="Increase quantity"
                       >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 4v16m8-8H4"
-                          />
-                        </svg>
+                        +
                       </button>
                     </div>
                   </div>
                 </div>
+
+                {/* SplitMeal */}
+                <div className="col-span-2 mt-1.5 sm:mt-2 border border-gray-200 rounded-md px-2 sm:px-3 py-1.5 sm:py-2 bg-white w-full max-w-full overflow-hidden">
+                  <SplitMeal itemKey={item.key} />
+                </div>
               </div>
             ))}
           </div>
+
 
           {/* -------------------- TOTAL SECTION -------------------- */}
           <div className="border-t border-dashed pt-4 mt-4 text-sm">
@@ -352,7 +336,6 @@ const AddToCart = () => {
             >
               Proceed to checkout
             </button>
-
           </div>
         </>
       )}

@@ -201,7 +201,8 @@ const DeliveryForm = () => {
           <AddToCart />
         </div>
       </div>
-      <SquarePayment />
+     
+      
     </>
   );
 };

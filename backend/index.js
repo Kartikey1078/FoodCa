@@ -11,6 +11,7 @@ import popRoutes from "./routes/popRoutes.js";
 import DeliveryDetailsRoutes from "./routes/DeliveryDetailsRoutes.js";
 import stripeRoutes from "./routes/stripeRoutes.js";
 import squareRoutes from "./routes/squareRoutes.js";
+import nutritionFactsRoutes from "./routes/nutritionFactsRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -29,6 +30,7 @@ console.log("Allowed Origins:", allowedOrigins);
 
 // Middlewares
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // 🔥 CORS Fix for Vercel + Local
 app.use(
@@ -58,6 +60,7 @@ app.use("/api/popup", popRoutes);
 app.use("/api/deliverydetails", DeliveryDetailsRoutes);
 app.use("/api/stripe", stripeRoutes);
 app.use("/api/square", squareRoutes);
+app.use("/api/nutrition-facts", nutritionFactsRoutes);
 
 
 export default app;

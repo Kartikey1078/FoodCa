@@ -13,10 +13,6 @@ const checkOutSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  // price: {
-  //   type: Number,
-  //   required: true,
-  // },  
   nutrition: [
     {
       label: { type: String, required: true },
@@ -35,9 +31,10 @@ const checkOutSchema = new mongoose.Schema({
     },
   },
   tags: {
-    type: [String],   // Array of tag names
-    default: [],      // Optional, default empty array
+    type: [String],   
+    default: [],
   },
+  
 });
 
 const checkout = mongoose.models.Checkout || mongoose.model("Checkout", checkOutSchema);

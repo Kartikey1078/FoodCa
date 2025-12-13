@@ -6,6 +6,7 @@ import { Routes, Route } from 'react-router-dom';
 import SelectPlan from './page/SelectPlan';
 import CheckOut from './page/CheckOut';
 import TagAdmin from './page/TagAdmin';
+import NutritionFact from './page/NutritionFact';
 
 const App = () => {
   return (
@@ -20,6 +21,7 @@ const App = () => {
           <Route path="/plans" element={<SelectPlan />} />
           <Route path="/CheckOut" element={<CheckOut />} />
           <Route path="/TagAdmin" element={<TagAdmin />} />
+          <Route path="/nutrition-facts" element={<NutritionFact />} />
         </Routes>
 
       </main>

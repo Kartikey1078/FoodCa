@@ -130,6 +130,7 @@ const CheckoutCard = ({ meal }) => {
       quantity,
       price,
       image,
+      
     });
 
     setAdded(true);
@@ -140,6 +141,7 @@ const CheckoutCard = ({ meal }) => {
   return (
     <div className="relative flex flex-col w-full max-w-[330px] bg-white rounded-3xl shadow-xl overflow-hidden border border-white m-3 sm:max-w-[350px] md:h-[540px] lg:h-[560px]">
       {/* Image */}
+      
       <div className="relative h-40 sm:h-48 w-full">
         <img src={image} alt={title} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-90" />
@@ -194,18 +196,25 @@ const CheckoutCard = ({ meal }) => {
                     shake ? "animate-shake" : ""
                   }`}
                 >
-                  {options.map((opt) => {
+                  {options.map((opt, idx) => {
                     const active = selectedOption === opt;
+                    const isOddTotal = options.length % 2 === 1;
+                    const isLastItem = idx === options.length - 1;
+                    const shouldCenter = isOddTotal && isLastItem;
+                    
                     return (
                       <button
                         key={opt}
                         onClick={() => handleOptionSelect(opt)}
-                        className={`py-1.5 px-2 rounded-xl border font-semibold truncate transition-all
-                          ${
-                            active
-                              ? "bg-gray-800 border-gray-800 text-white shadow-md"
-                              : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
-                          }`}
+                        className={`py-1.5 px-2 rounded-xl border font-semibold truncate transition-all ${
+                          shouldCenter 
+                            ? "col-span-2 justify-self-center max-w-[calc(50%-0.1875rem)] w-[calc(50%-0.1875rem)]" 
+                            : "w-full"
+                        } ${
+                          active
+                            ? "bg-gray-800 border-gray-800 text-white shadow-md"
+                            : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
+                        }`}
                       >
                         {opt}
                       </button>
@@ -227,7 +236,7 @@ const CheckoutCard = ({ meal }) => {
         </div>
 
         {/* Quantity */}
-        <div className="mt-3 flex items-end justify-between gap-3">
+        <div className="mt-3 flex items-end justify-end gap-3">
           {/* <span className="text-lg font-bold text-gray-900">${price}</span> */}
 
           <div className="flex flex-col items-end">

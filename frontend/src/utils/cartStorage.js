@@ -1,5 +1,6 @@
 export const CART_STORAGE_KEY = "foodapp_cart";
 export const CART_UPDATED_EVENT = "cartUpdated";
+export const SPLIT_MEAL_STORAGE_KEY = "foodapp_split_schedule";
 
 const safeParse = (raw) => {
   try {
@@ -65,5 +66,39 @@ export const updateItemQuantity = (key, newQuantity) => {
   }
   
   return items;
+};
+
+// ---------------- SPLIT MEAL SCHEDULE ----------------
+export const getSplitMealSchedule = () => {
+  if (typeof window === "undefined") return { sunday: 0, wednesday: 0 };
+  const raw = window.localStorage.getItem(SPLIT_MEAL_STORAGE_KEY);
+  const parsed = safeParse(raw);
+
+  if (parsed && typeof parsed === "object") {
+    return {
+      sunday: Number(parsed.sunday) || 0,
+      wednesday: Number(parsed.wednesday) || 0,
+    };
+  }
+
+  return { sunday: 0, wednesday: 0 };
+};
+
+export const saveSplitMealSchedule = (schedule) => {
+  if (typeof window === "undefined") return;
+  const sanitized = {
+    sunday: Math.max(0, Number(schedule?.sunday) || 0),
+    wednesday: Math.max(0, Number(schedule?.wednesday) || 0),
+  };
+
+  window.localStorage.setItem(
+    SPLIT_MEAL_STORAGE_KEY,
+    JSON.stringify(sanitized)
+  );
+};
+
+export const clearSplitMealSchedule = () => {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(SPLIT_MEAL_STORAGE_KEY);
 };
 

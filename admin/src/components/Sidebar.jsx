@@ -7,6 +7,7 @@ const Sidebar = () => {
     { label: 'Plans', hint: 'Manage', path: '/plans' },
     { label: 'Checkout', hint: 'checkout', path: '/CheckOut' },
     { label: 'TagAdmin', hint: 'TagAdmin', path: '/TagAdmin' },
+    { label: 'Nutrition Facts', hint: 'Manage', path: '/nutrition-facts' },
     { label: 'Customers', hint: 'Insights', path: '/customers' },
     { label: 'Settings', hint: 'System', path: '/settings' },
   ];
