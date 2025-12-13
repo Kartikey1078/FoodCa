@@ -4,10 +4,15 @@ import SelectPlan from "../models/select_plan.js";
 // get all plan
 export const getPlans = async (req, res) =>{
     try {
-        const SelectPlans = await  SelectPlan.find({isActive: true});
-        res.status(200).json(SelectPlans)
+        const SelectPlans = await SelectPlan.find({isActive: true});
+        res.status(200).json(SelectPlans);
     } catch (error) {
-        res.status(500).json({ message: 'Failed to fetch plans', error });
+        console.error("Error fetching plans:", error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Failed to fetch plans', 
+            error: error.message 
+        });
     }
 }
 

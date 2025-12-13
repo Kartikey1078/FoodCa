@@ -21,9 +21,10 @@ const app = express();
 // 👌 Allowed Origins
 const allowedOrigins = [
   process.env.FRONTEND_ORIGIN || 'https://food-ca.vercel.app',
-  process.env.ADMIN_ORIGIN || 'https://food-ca-hkw4.vercel.app/',
+  process.env.ADMIN_ORIGIN || 'https://food-ca-hkw4.vercel.app',
   'http://localhost:5173',
-  'http://localhost:5174'
+  'http://localhost:5174',
+  'https://food-ca-hkw4.vercel.app', // Without trailing slash
 ];
 
 console.log("Allowed Origins:", allowedOrigins);
@@ -36,19 +37,47 @@ app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) {
         return callback(null, true);
       }
+
+      // Normalize origin (remove trailing slash)
+      const normalizedOrigin = origin.replace(/\/$/, '');
+      
+      // Check if origin is in allowed list (with or without trailing slash)
+      const isAllowed = allowedOrigins.some(allowed => {
+        const normalizedAllowed = allowed.replace(/\/$/, '');
+        return normalizedOrigin === normalizedAllowed || origin === allowed;
+      });
+
+      if (isAllowed) {
+        return callback(null, true);
+      }
+
       console.log("Blocked Origin:", origin);
+      console.log("Normalized Origin:", normalizedOrigin);
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 
 // Default route
 app.get('/', (req, res) => {
   res.json({ message: 'Backend Running on Vercel!' });
+});
+
+// CORS test endpoint
+app.get('/api/cors-test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'CORS is working!',
+    origin: req.headers.origin,
+    allowedOrigins: allowedOrigins,
+  });
 });
 
 // Routes
@@ -62,5 +91,22 @@ app.use("/api/stripe", stripeRoutes);
 app.use("/api/square", squareRoutes);
 app.use("/api/nutrition-facts", nutritionFactsRoutes);
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Error:", err);
+  
+  if (err.message === "Not allowed by CORS") {
+    return res.status(403).json({
+      success: false,
+      message: "CORS Error: Origin not allowed",
+      origin: req.headers.origin,
+    });
+  }
+
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+  });
+});
 
 export default app;
