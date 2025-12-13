@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import cors from 'cors';
 import express from 'express';
+import multer from 'multer';
 
 import itemRoutes from './routes/itemRoutes.js';
 import connectDB from './config/db.js';
@@ -30,8 +31,9 @@ const allowedOrigins = [
 console.log("Allowed Origins:", allowedOrigins);
 
 // Middlewares
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Increase body size limits for file uploads (10MB for JSON, 50MB for urlencoded/form-data)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // 🔥 CORS Fix for Vercel + Local
 app.use(
@@ -100,6 +102,28 @@ app.use((err, req, res, next) => {
       success: false,
       message: "CORS Error: Origin not allowed",
       origin: req.headers.origin,
+    });
+  }
+
+  // Handle multer errors (file size, file type)
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({
+        success: false,
+        message: "File too large. Maximum size is 5MB.",
+      });
+    }
+    return res.status(400).json({
+      success: false,
+      message: err.message || "File upload error",
+    });
+  }
+
+  // Handle 413 Payload Too Large
+  if (err.status === 413 || err.message.includes('too large') || err.message.includes('payload')) {
+    return res.status(413).json({
+      success: false,
+      message: "Request too large. Please reduce file size or request payload.",
     });
   }
 

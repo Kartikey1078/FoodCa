@@ -47,24 +47,48 @@ export default function CheckOut() {
 
   const [formData, setFormData] = useState({
     image: "",
+    imageFile: null,
     title: "",
     subtitle: "",
     price: "",
     options: "",
     tags: [], // Added tags array
+    nutrition: [], // Nutrition facts array
   });
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
-  // Convert uploaded image to Base64
+  // Handle image file selection
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!validTypes.includes(file.type)) {
+      alert('Please select a JPEG, JPG, or PNG image file');
+      e.target.value = ''; // Clear the input
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      alert('File size is too large. Maximum size is 5MB. Please compress the image or choose a smaller file.');
+      e.target.value = ''; // Clear the input
+      return;
+    }
+
+    // Store the file for upload
+    setFormData((prev) => ({
+      ...prev,
+      imageFile: file,
+    }));
+
+    // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
-      setFormData((prev) => ({
-        ...prev,
-        image: reader.result,
-      }));
+      setImagePreview(reader.result);
     };
     reader.readAsDataURL(file);
   };
@@ -102,12 +126,15 @@ export default function CheckOut() {
     setEditingId(null);
     setFormData({
       image: "",
+      imageFile: null,
       title: "",
       subtitle: "",
       price: "",
       options: "",
       tags: [],
+      nutrition: [],
     });
+    setImagePreview(null);
     setShowForm(true);
   };
 
@@ -116,12 +143,15 @@ export default function CheckOut() {
     setEditingId(item._id);
     setFormData({
       image: item.image,
+      imageFile: null,
       title: item.title,
       subtitle: item.subtitle,
-      price: item.price,
+      price: item.price || "",
       options: item.options.join(", "),
       tags: item.tags || [],
+      nutrition: item.nutrition || [],
     });
+    setImagePreview(item.image);
     setShowForm(true);
   };
 
@@ -140,23 +170,63 @@ export default function CheckOut() {
   // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const payload = {
-      ...formData,
-      price: parseFloat(formData.price),
-      options: formData.options.split(",").map((o) => o.trim()),
-    };
+    setUploading(true);
 
     try {
-      if (editingId) {
-        await axios.put(`${API_URL}/${editingId}`, payload);
-      } else {
-        await axios.post(API_URL, payload);
+      const formDataToSend = new FormData();
+      
+      // Add image file if new image is selected
+      if (formData.imageFile) {
+        formDataToSend.append("image", formData.imageFile);
+      } else if (!editingId) {
+        // For new items, image file is required
+        return alert("Please upload an image");
       }
+      // For updates without new image, don't send image field (will keep existing)
+
+      // Add other fields
+      formDataToSend.append("title", formData.title);
+      formDataToSend.append("subtitle", formData.subtitle);
+      formDataToSend.append("options", formData.options);
+      formDataToSend.append("tags", JSON.stringify(formData.tags));
+      
+      // Add nutrition if it exists
+      if (formData.nutrition && formData.nutrition.length > 0) {
+        formDataToSend.append("nutrition", JSON.stringify(formData.nutrition));
+      }
+
+      if (editingId) {
+        await axios.put(`${API_URL}/${editingId}`, formDataToSend, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      } else {
+        await axios.post(API_URL, formDataToSend, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      }
+      
       setShowForm(false);
+      setImagePreview(null);
       loadItems();
     } catch (err) {
-      console.error(err);
+      console.error("Submit error:", err);
+      
+      // Handle specific error cases
+      if (err.response?.status === 413) {
+        alert("File is too large. Maximum size is 5MB. Please compress the image or choose a smaller file.");
+      } else if (err.response?.data?.message) {
+        alert(err.response.data.message);
+      } else if (err.message) {
+        alert(err.message);
+      } else {
+        alert("Failed to save item. Please try again.");
+      }
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -432,19 +502,24 @@ export default function CheckOut() {
 
               {/* IMAGE UPLOAD */}
               <div>
-                <label className="block font-medium mb-1">Upload Image</label>
+                <label className="block font-medium mb-1">
+                  Upload Image {editingId ? "(Leave empty to keep current)" : "*"}
+                </label>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/jpg,image/png"
                   onChange={handleImageUpload}
                   className="border p-2 rounded w-full bg-gray-50"
+                  required={!editingId}
                 />
-                {formData.image && (
-                  <img
-                    src={formData.image}
-                    alt="preview"
-                    className="w-24 h-24 object-cover rounded mt-2"
-                  />
+                {(imagePreview || formData.image) && (
+                  <div className="mt-2">
+                    <img
+                      src={imagePreview || formData.image}
+                      alt="preview"
+                      className="w-32 h-32 object-cover rounded border"
+                    />
+                  </div>
                 )}
               </div>
 
@@ -503,14 +578,19 @@ export default function CheckOut() {
               <div className="flex justify-between mt-4">
                 <button
                   type="submit"
-                  className="bg-green-600 text-white px-4 py-2 rounded"
+                  disabled={uploading}
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
                 >
-                  {editingId ? "Save Changes" : "Create"}
+                  {uploading ? "Uploading..." : editingId ? "Save Changes" : "Create"}
                 </button>
                 <button
                   type="button"
-                  className="bg-gray-600 text-white px-4 py-2 rounded"
-                  onClick={() => setShowForm(false)}
+                  className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+                  onClick={() => {
+                    setShowForm(false);
+                    setImagePreview(null);
+                  }}
+                  disabled={uploading}
                 >
                   Cancel
                 </button>

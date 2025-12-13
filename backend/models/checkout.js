@@ -5,6 +5,9 @@ const checkOutSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  imagePublicId: {
+    type: String,
+  },
   title: {
     type: String,
     required: true,
@@ -34,7 +37,8 @@ const checkOutSchema = new mongoose.Schema({
     type: [String],   
     default: [],
   },
-  
+}, {
+  timestamps: true,
 });
 
 const checkout = mongoose.models.Checkout || mongoose.model("Checkout", checkOutSchema);
