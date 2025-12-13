@@ -9,6 +9,9 @@ export default function CheckOut() {
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedTag, setSelectedTag] = useState("All");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [viewMode, setViewMode] = useState("cards"); // "cards" or "table"
 
   const [formData, setFormData] = useState({
     image: "",
@@ -37,10 +40,24 @@ export default function CheckOut() {
   // Load all items
   const loadItems = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const res = await axios.get(API_URL);
-      setItems(res.data.data);
+      console.log("API Response:", res.data); // Debug log
+      
+      if (res.data.success && Array.isArray(res.data.data)) {
+        setItems(res.data.data);
+      } else {
+        console.error("Unexpected response structure:", res.data);
+        setError("Unexpected response format from API");
+        setItems([]);
+      }
     } catch (err) {
       console.error("Failed to load items:", err);
+      setError(err.response?.data?.message || err.message || "Failed to load checkout items");
+      setItems([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -115,15 +132,217 @@ export default function CheckOut() {
     <div className="p-6">
       <h2 className="text-3xl font-bold mb-4">Checkout Admin Panel</h2>
 
-      <button
-        onClick={openCreateForm}
-        className="bg-blue-600 text-white px-4 py-2 rounded shadow mb-4"
-      >
-        + Add New Item
-      </button>
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <strong>Error:</strong> {error}
+          <div className="mt-2 text-sm">
+            <p>API URL: {API_URL}</p>
+            <p>Items loaded: {items.length}</p>
+          </div>
+          <button
+            onClick={loadItems}
+            className="mt-2 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
-      {/* TABLE */}
-      <div className="overflow-x-auto">
+      <div className="flex justify-between items-center mb-4">
+        <button
+          onClick={openCreateForm}
+          className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700"
+        >
+          + Add New Item
+        </button>
+
+        {/* View Toggle */}
+        <div className="flex gap-2 bg-gray-100 rounded-lg p-1">
+          <button
+            onClick={() => setViewMode("cards")}
+            className={`px-4 py-2 rounded transition ${
+              viewMode === "cards"
+                ? "bg-white shadow text-blue-600"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            Cards
+          </button>
+          <button
+            onClick={() => setViewMode("table")}
+            className={`px-4 py-2 rounded transition ${
+              viewMode === "table"
+                ? "bg-white shadow text-blue-600"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            Table
+          </button>
+        </div>
+      </div>
+
+      {/* Loading State */}
+      {loading && (
+        <div className="text-center py-8">
+          <p className="text-gray-500">Loading checkout items...</p>
+        </div>
+      )}
+
+      {/* CARD VIEW */}
+      {!loading && viewMode === "cards" && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
+          {items.map((item) => (
+            <div
+              key={item._id}
+              className="relative flex flex-col w-full bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200"
+            >
+              {/* Image */}
+              <div className="relative h-40 sm:h-48 w-full">
+                <img
+                  src={item.image || "https://via.placeholder.com/400x300?text=No+Image"}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.src = "https://via.placeholder.com/400x300?text=No+Image";
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-90" />
+                
+                {/* Admin Actions Overlay */}
+                <div className="absolute top-2 right-2 flex gap-2">
+                  <button
+                    onClick={() => openEditForm(item)}
+                    className="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item._id)}
+                    className="bg-red-600 text-white px-2 py-1 rounded text-xs hover:bg-red-700"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="relative px-4 pb-5 -mt-10 flex flex-col flex-1">
+                <div className="flex-1 space-y-2.5">
+                  <div className="bg-white rounded-2xl p-3 shadow-lg text-center">
+                    <h2 className="text-xl font-extrabold text-gray-800">{item.title}</h2>
+                    <p className="text-gray-400 text-xs font-medium mt-1">{item.subtitle}</p>
+
+                    {/* Nutrition pills */}
+                    {item.nutrition && Array.isArray(item.nutrition) && item.nutrition.length > 0 && (
+                      <div className="mt-3 flex items-center justify-between bg-gray-50 rounded-xl px-1 py-2 border divide-x">
+                        {item.nutrition.map((nut, idx) => (
+                          <div key={idx} className="flex-1 flex flex-col items-center">
+                            <div className="flex items-center gap-0.5">
+                              {nut.highlight && (
+                                <svg
+                                  className="w-3 h-3 text-orange-500"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              )}
+                              <span
+                                className={`text-[11px] font-bold ${
+                                  nut.highlight ? "text-gray-900" : "text-gray-700"
+                                }`}
+                              >
+                                {nut.value}
+                              </span>
+                            </div>
+                            <span className="text-[8px] uppercase tracking-wide text-gray-400">
+                              {nut.label}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Options */}
+                  <div className="min-h-[80px]">
+                    {item.options && Array.isArray(item.options) && item.options.length > 0 ? (
+                      <div className="bg-gradient-to-b from-gray-50 to-white px-3.5 py-3.5 rounded-2xl border">
+                        <div className="flex justify-between mb-0.5">
+                          <span className="text-[11px] font-bold text-gray-700">
+                            Select Base
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                          {item.options.map((opt, idx) => (
+                            <button
+                              key={idx}
+                              className="py-1.5 px-2 rounded-xl border font-semibold truncate bg-white border-gray-200 text-gray-500"
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center border bg-gradient-to-b from-gray-50 to-white px-3.5 py-3.5 rounded-2xl">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-100 rounded-full text-[11px] font-semibold">
+                          <svg
+                            className="w-4 h-4 text-gray-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={1.8}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M5 11a4 4 0 113.5-6 4 4 0 017 0A4 4 0 1122 11v2a2 2 0 01-2 2h-1.5l-.5 4a2 2 0 01-2 2H8a2 2 0 01-2-2l-.5-4H4a2 2 0 01-2-2v-2z"
+                            />
+                          </svg>
+                          Chef's preset base
+                        </span>
+                        <p className="text-[11px] text-gray-500 font-medium mt-2 text-center">
+                          Base pairing already selected for this dish.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tags */}
+                  {item.tags && Array.isArray(item.tags) && item.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {item.tags.map((tag, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] rounded-full"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {items.length === 0 && (
+            <div className="col-span-full text-center py-12 text-gray-400">
+              No checkout items yet. Click "Add New Item" to create one.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TABLE VIEW */}
+      {!loading && viewMode === "table" && (
+        <div className="overflow-x-auto">
         <table className="w-full border border-gray-300 rounded">
           <thead>
             <tr className="bg-gray-100 border-b">
@@ -136,29 +355,44 @@ export default function CheckOut() {
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => (
+            {!loading && items.map((item) => (
               <tr key={item._id} className="border-b hover:bg-gray-50 transition">
                 <td className="p-3">
-                  <img
-                    className="w-14 h-14 object-cover rounded"
-                    src={item.image}
-                    alt=""
-                  />
+                  {item.image && (
+                    <img
+                      className="w-14 h-14 object-cover rounded"
+                      src={item.image}
+                      alt={item.title || "Item"}
+                      onError={(e) => {
+                        e.target.src = "https://via.placeholder.com/56x56?text=No+Image";
+                      }}
+                    />
+                  )}
                 </td>
-                <td className="p-3">{item.title}</td>
+                <td className="p-3 font-medium">{item.title || "Untitled"}</td>
                 {/* <td className="p-3">${item.price}</td> */}
-                <td className="p-3">{item.options.join(", ")}</td>
-                <td className="p-3">{item.tags.join(", ")}</td>
+                <td className="p-3">
+                  {Array.isArray(item.options) 
+                    ? item.options.join(", ") 
+                    : item.options || "—"}
+                </td>
+                <td className="p-3">
+                  {Array.isArray(item.tags) 
+                    ? item.tags.length > 0 
+                      ? item.tags.join(", ") 
+                      : "No tags"
+                    : "—"}
+                </td>
                 <td className="p-3 flex gap-2">
                   <button
                     onClick={() => openEditForm(item)}
-                    className="bg-green-600 text-white px-3 py-1 rounded"
+                    className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDelete(item._id)}
-                    className="bg-red-600 text-white px-3 py-1 rounded"
+                    className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
                   >
                     Delete
                   </button>
@@ -166,16 +400,17 @@ export default function CheckOut() {
               </tr>
             ))}
 
-            {items.length === 0 && (
+            {!loading && items.length === 0 && !error && (
               <tr>
-                <td colSpan="6" className="p-4 text-center text-gray-400">
-                  No items yet.
+                <td colSpan="5" className="p-4 text-center text-gray-400">
+                  No checkout items yet. Click "Add New Item" to create one.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
-      </div>
+        </div>
+      )}
 
       {/* FORM MODAL */}
       {showForm && (

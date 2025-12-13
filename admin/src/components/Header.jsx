@@ -10,12 +10,7 @@ const Header = () => {
       </div>
 
       <div className="page-header__actions">
-        {/* <button type="button" className="btn btn-ghost">
-          Filters
-        </button>
-        <button type="button" className="btn btn-primary">
-          Add Menu Item
-        </button> */}
+        
       </div>
     </header>
   );
