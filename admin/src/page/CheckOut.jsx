@@ -300,7 +300,7 @@ export default function CheckOut() {
 
       {/* CARD VIEW - Matching CheckoutCard.jsx design */}
       {!loading && viewMode === "cards" && (
-        <div className="flex flex-wrap justify-center lg:justify-start w-full gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full">
           {items.map((item) => {
             const hasOptions = item.options && Array.isArray(item.options) && item.options.length > 0;
             const isOddTotal = hasOptions && item.options.length % 2 === 1;
@@ -308,10 +308,10 @@ export default function CheckOut() {
             return (
               <div
                 key={item._id}
-                className="relative flex flex-col w-full max-w-[330px] bg-white rounded-3xl shadow-xl overflow-hidden border border-white m-3 sm:max-w-[350px] md:h-[540px] lg:h-[560px] group"
+                className="relative flex flex-col w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-white group"
               >
                 {/* Image */}
-                <div className="relative h-40 sm:h-48 w-full">
+                <div className="relative h-32 sm:h-36 w-full">
                   <img
                     src={item.image || "https://via.placeholder.com/400x300?text=No+Image"}
                     alt={item.title}
@@ -323,16 +323,16 @@ export default function CheckOut() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-90" />
                   
                   {/* Admin Actions Overlay - Show on hover */}
-                  <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => openEditForm(item)}
-                      className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-green-700 shadow-lg"
+                      className="bg-green-600 text-white px-2 py-1 rounded text-[10px] font-semibold hover:bg-green-700 shadow-lg"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(item._id)}
-                      className="bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-700 shadow-lg"
+                      className="bg-red-600 text-white px-2 py-1 rounded text-[10px] font-semibold hover:bg-red-700 shadow-lg"
                     >
                       Delete
                     </button>
@@ -340,28 +340,28 @@ export default function CheckOut() {
                 </div>
 
                 {/* Content */}
-                <div className="relative px-4 pb-5 -mt-10 flex flex-col flex-1">
-                  <div className="flex-1 overflow-y-auto pr-1 space-y-2.5">
-                    <div className="bg-white rounded-2xl p-3 shadow-lg text-center">
-                      <h2 className="text-xl font-extrabold text-gray-800">{item.title}</h2>
-                      <p className="text-gray-400 text-xs font-medium mt-1">{item.subtitle}</p>
+                <div className="relative px-3 pb-3 -mt-8 flex flex-col flex-1">
+                  <div className="flex-1 overflow-y-auto pr-1 space-y-2">
+                    <div className="bg-white rounded-xl p-2 shadow-lg text-center">
+                      <h2 className="text-sm font-extrabold text-gray-800 line-clamp-1">{item.title}</h2>
+                      <p className="text-gray-400 text-[10px] font-medium mt-0.5 line-clamp-1">{item.subtitle}</p>
 
                       {/* Nutrition pills */}
                       {item.nutrition && Array.isArray(item.nutrition) && item.nutrition.length > 0 && (
-                        <div className="mt-3 flex items-center justify-between bg-gray-50 rounded-xl px-1 py-2 border divide-x">
+                        <div className="mt-2 flex items-center justify-between bg-gray-50 rounded-lg px-1 py-1.5 border divide-x">
                           {item.nutrition.map((nut, idx) => (
                             <div key={idx} className="flex-1 flex flex-col items-center">
                               <div className="flex items-center gap-0.5">
                                 {nut.highlight && <Icons.Fire />}
                                 <span
-                                  className={`text-[11px] font-bold ${
+                                  className={`text-[9px] font-bold ${
                                     nut.highlight ? "text-gray-900" : "text-gray-700"
                                   }`}
                                 >
                                   {nut.value}
                                 </span>
                               </div>
-                              <span className="text-[8px] uppercase tracking-wide text-gray-400">
+                              <span className="text-[7px] uppercase tracking-wide text-gray-400">
                                 {nut.label}
                               </span>
                             </div>
@@ -371,16 +371,16 @@ export default function CheckOut() {
                     </div>
 
                     {/* Options */}
-                    <div className="min-h-[80px]">
+                    <div className="min-h-[60px]">
                       {hasOptions ? (
                         <>
                           <div className="flex justify-between mb-0.5">
-                            <span className="text-[11px] font-bold text-gray-700">
+                            <span className="text-[9px] font-bold text-gray-700">
                               Select Base
                             </span>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                          <div className="grid grid-cols-2 gap-1 text-[9px]">
                             {item.options.map((opt, idx) => {
                               const isLastItem = idx === item.options.length - 1;
                               const shouldCenter = isOddTotal && isLastItem;
@@ -388,9 +388,9 @@ export default function CheckOut() {
                               return (
                                 <button
                                   key={idx}
-                                  className={`py-1.5 px-2 rounded-xl border font-semibold truncate transition-all ${
+                                  className={`py-1 px-1.5 rounded-lg border font-semibold truncate transition-all ${
                                     shouldCenter 
-                                      ? "col-span-2 justify-self-center max-w-[calc(50%-0.1875rem)] w-[calc(50%-0.1875rem)]" 
+                                      ? "col-span-2 justify-self-center max-w-[calc(50%-0.25rem)] w-[calc(50%-0.25rem)]" 
                                       : "w-full"
                                   } bg-white border-gray-200 text-gray-500 hover:bg-gray-50`}
                                 >
@@ -401,12 +401,12 @@ export default function CheckOut() {
                           </div>
                         </>
                       ) : (
-                        <div className="flex flex-col items-center border bg-gradient-to-b from-gray-50 to-white px-3.5 py-3.5 rounded-2xl">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-100 rounded-full text-[11px] font-semibold">
-                            <Icons.Chef /> Chef's preset base
+                        <div className="flex flex-col items-center border bg-gradient-to-b from-gray-50 to-white px-2 py-2 rounded-xl">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-100 rounded-full text-[9px] font-semibold">
+                            <Icons.Chef /> Chef's preset
                           </span>
-                          <p className="text-[11px] text-gray-500 font-medium mt-2 text-center">
-                            Base pairing already selected for this dish.
+                          <p className="text-[9px] text-gray-500 font-medium mt-1 text-center">
+                            Base pairing selected.
                           </p>
                         </div>
                       )}
@@ -418,7 +418,7 @@ export default function CheckOut() {
           })}
 
           {items.length === 0 && (
-            <div className="w-full text-center py-12 text-gray-400">
+            <div className="col-span-full text-center py-12 text-gray-400">
               No checkout items yet. Click "Add New Item" to create one.
             </div>
           )}
