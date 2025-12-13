@@ -190,9 +190,16 @@ export default function CheckOut() {
       formDataToSend.append("options", formData.options);
       formDataToSend.append("tags", JSON.stringify(formData.tags));
       
-      // Add nutrition if it exists
-      if (formData.nutrition && formData.nutrition.length > 0) {
-        formDataToSend.append("nutrition", JSON.stringify(formData.nutrition));
+      // Filter out empty nutrition entries and add nutrition if it exists
+      const validNutrition = formData.nutrition
+        ? formData.nutrition.filter(nut => nut.label && nut.value)
+        : [];
+      
+      if (validNutrition.length > 0) {
+        formDataToSend.append("nutrition", JSON.stringify(validNutrition));
+      } else {
+        // Send empty array if no valid nutrition
+        formDataToSend.append("nutrition", JSON.stringify([]));
       }
 
       if (editingId) {
@@ -564,6 +571,95 @@ export default function CheckOut() {
                   }
                   required
                 />
+              </div>
+
+              {/* NUTRITION FACTS */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block font-medium">Nutrition Facts</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        nutrition: [
+                          ...formData.nutrition,
+                          { label: "", value: "", highlight: false },
+                        ],
+                      });
+                    }}
+                    className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                  >
+                    + Add Nutrition
+                  </button>
+                </div>
+
+                <div className="space-y-2 max-h-48 overflow-y-auto border rounded p-2">
+                  {formData.nutrition.map((nut, index) => (
+                    <div
+                      key={index}
+                      className="flex gap-2 items-start p-2 bg-gray-50 rounded border"
+                    >
+                      <div className="flex-1 space-y-2">
+                        <input
+                          type="text"
+                          placeholder="Label (e.g., Calories)"
+                          className="border p-2 rounded w-full text-sm"
+                          value={nut.label}
+                          onChange={(e) => {
+                            const newNutrition = [...formData.nutrition];
+                            newNutrition[index].label = e.target.value;
+                            setFormData({ ...formData, nutrition: newNutrition });
+                          }}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Value (e.g., 350 kcal)"
+                          className="border p-2 rounded w-full text-sm"
+                          value={nut.value}
+                          onChange={(e) => {
+                            const newNutrition = [...formData.nutrition];
+                            newNutrition[index].value = e.target.value;
+                            setFormData({ ...formData, nutrition: newNutrition });
+                          }}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="flex items-center gap-1 text-xs">
+                          <input
+                            type="checkbox"
+                            checked={nut.highlight || false}
+                            onChange={(e) => {
+                              const newNutrition = [...formData.nutrition];
+                              newNutrition[index].highlight = e.target.checked;
+                              setFormData({ ...formData, nutrition: newNutrition });
+                            }}
+                            className="w-4 h-4"
+                          />
+                          <span>Highlight</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newNutrition = formData.nutrition.filter(
+                              (_, i) => i !== index
+                            );
+                            setFormData({ ...formData, nutrition: newNutrition });
+                          }}
+                          className="text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {formData.nutrition.length === 0 && (
+                    <p className="text-sm text-gray-400 text-center py-4">
+                      No nutrition facts added. Click "+ Add Nutrition" to add one.
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* TAG SELECTION */}

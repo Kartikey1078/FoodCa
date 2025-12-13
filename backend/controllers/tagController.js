@@ -3,12 +3,12 @@ import Tag from "../models/tag.js";
 // GET ALL TAGS
 export const getTags = async (req, res) => {
   try {
-    const tags = await Tag.find();
-    res.status(200).json({ success: true, data: tags });
+    const tags = await Tag.find(); res.status(200).json({ success: true, data: tags });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // GET ONE TAG
 export const getTagById = async (req, res) => {
