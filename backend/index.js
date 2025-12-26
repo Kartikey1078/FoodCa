@@ -3,18 +3,18 @@ import cors from "cors";
 import express from "express";
 import multer from "multer";
 
-import connectDB from "../config/db.js";
+import connectDB from "./config/db.js";
 
-import itemRoutes from "../routes/itemRoutes.js";
-import SelectPlan from "../routes/select_plan.js";
-import checkoutRoutes from "../routes/checkoutRoutes.js";
-import tagRoutes from "../routes/tagRoutes.js";
-import popRoutes from "../routes/popRoutes.js";
-import DeliveryDetailsRoutes from "../routes/DeliveryDetailsRoutes.js";
-import stripeRoutes from "../routes/stripeRoutes.js";
-import squareRoutes from "../routes/squareRoutes.js";
-import nutritionFactsRoutes from "../routes/nutritionFactsRoutes.js";
-import orderRoutes from "../routes/orderRoutes.js";
+import itemRoutes from "./routes/itemRoutes.js";
+import SelectPlan from "./routes/select_plan.js";
+import checkoutRoutes from "./routes/checkoutRoutes.js";
+import tagRoutes from "./routes/tagRoutes.js";
+import popRoutes from "./routes/popRoutes.js";
+import DeliveryDetailsRoutes from "./routes/DeliveryDetailsRoutes.js";
+import stripeRoutes from "./routes/stripeRoutes.js";
+import squareRoutes from "./routes/squareRoutes.js";
+import nutritionFactsRoutes from "./routes/nutritionFactsRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
 
 /* =========================
    ENV + DB
