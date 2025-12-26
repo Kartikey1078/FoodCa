@@ -99,18 +99,18 @@ app.use((err, req, res, next) => {
 
   res.status(err?.status || 500).json({
     success: false,
-    message: err?.message || "Internal Server Error",
+    message: err?.message || "Internal Server Error hi",
   });
 });
 
 /* =========================
    LOCAL SERVER
-========================= */
-if (process.env.NODE_ENV !== "production") {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-  });
-}
+// ========================= */
+// if (process.env.NODE_ENV !== "production") {
+//   app.listen(PORT, () => {
+//     console.log(`🚀 Server running on http://localhost:${PORT}`);
+//   });
+// }
 
 /* =========================
    EXPORT FOR VERCEL
