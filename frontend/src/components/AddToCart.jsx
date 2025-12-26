@@ -1,15 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useCart } from "../context/CartContext";
 import { usePlan } from "../context/PlanContext";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import SplitMeal from "./SplitMeal";
+import { useLocation } from "react-router-dom";
+import { CHECKOUT_TOTAL_UPDATED_EVENT } from "../utils/cartStorage";
 
 const AddToCart = () => {
   const [minMealError, setMinMealError] = useState("");
   const [isMinMealModalOpen, setIsMinMealModalOpen] = useState(false);
   const navigate = useNavigate();
   const { user, isLoaded } = useUser();
+
+  const location = useLocation();
 
   const goToDeliveryForm = () => {
     navigate("/delivery-form");
@@ -64,6 +68,43 @@ const AddToCart = () => {
   // ---- NEW GRAND TOTAL (Plan Price + extra meal charges) ----
   const grandTotal = planInfo.price + extraMealCost;
 
+  // Use refs to track previous values and prevent duplicate saves
+  const prevItemsRef = useRef(null);
+  const prevGrandTotalRef = useRef(null);
+  const prevSelectedPlanRef = useRef(null);
+
+  useEffect(() => {
+    const itemsString = JSON.stringify(items);
+    const itemsChanged = prevItemsRef.current !== itemsString;
+    const totalChanged = prevGrandTotalRef.current !== grandTotal;
+    const planChanged = prevSelectedPlanRef.current !== selectedPlan;
+
+    // Only save if something actually changed
+    if (itemsChanged || totalChanged || planChanged) {
+      if (selectedPlan && items.length > 0) {
+        localStorage.setItem("checkout_cart", itemsString);
+        localStorage.setItem("checkout_total", String(grandTotal));
+        // Dispatch custom event to notify other components (e.g., SquarePayment)
+        window.dispatchEvent(new CustomEvent(CHECKOUT_TOTAL_UPDATED_EVENT, {
+          detail: { total: grandTotal }
+        }));
+      } else {
+        localStorage.removeItem("checkout_cart");
+        localStorage.removeItem("checkout_total");
+        // Dispatch event with 0 total when cart is cleared
+        window.dispatchEvent(new CustomEvent(CHECKOUT_TOTAL_UPDATED_EVENT, {
+          detail: { total: 0 }
+        }));
+      }
+
+      // Update refs
+      prevItemsRef.current = itemsString;
+      prevGrandTotalRef.current = grandTotal;
+      prevSelectedPlanRef.current = selectedPlan;
+    }
+  }, [items, grandTotal, selectedPlan]);
+  
+
   // ---- HANDLE PROCEED ----
   const handleProceedToCheckout = () => {
     // If user is not authenticated, send them to sign-in first
@@ -88,14 +129,8 @@ const AddToCart = () => {
       return;
     }
 
-    // Persist checkout data for payment step
-    try {
-      // Save selected cart items and total so DeliveryForm / SquarePayment can use them
-      localStorage.setItem("checkout_cart", JSON.stringify(items));
-      localStorage.setItem("checkout_total", String(grandTotal));
-    } catch (err) {
-      console.warn("Failed to persist checkout data:", err);
-    }
+    // Note: Checkout data is already persisted by useEffect above
+    // No need to save again here to prevent duplicates
 
     // Clear any previous error and proceed
     setMinMealError("");
@@ -326,16 +361,19 @@ const AddToCart = () => {
               </p>
             )}
 
-            <button
-              onClick={handleProceedToCheckout}
-              className={`mt-4 w-full py-3 rounded-2xl font-semibold transition ${
-                selectedPlan && !meetsMinimumMeals
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-gray-900 text-white hover:bg-gray-800"
-              }`}
-            >
-              Proceed to checkout
-            </button>
+{location.pathname !== "/delivery-form" && (
+  <button
+    onClick={handleProceedToCheckout}
+    className={`mt-4 w-full py-3 rounded-2xl font-semibold transition ${
+      selectedPlan && !meetsMinimumMeals
+        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+        : "bg-gray-900 text-white hover:bg-gray-800"
+    }`}
+  >
+    Proceed to checkout
+  </button>
+)}
+
           </div>
         </>
       )}

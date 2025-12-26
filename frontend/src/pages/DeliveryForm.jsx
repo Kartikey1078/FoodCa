@@ -17,17 +17,21 @@ const DeliveryForm = () => {
     deliveryInstruction: "",
     acceptTerms: false,
   });
+  const [formErrors, setFormErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm({ ...form, [name]: type === "checkbox" ? checked : value });
+    // Clear error for this field when user starts typing
+    if (formErrors[name]) {
+      setFormErrors({ ...formErrors, [name]: "" });
+    }
   };
 
   return (
     <>
       <ReviewOrderHeader />
       <div className="max-w-6xl mx-auto mt-10 grid grid-cols-1 lg:grid-cols-[1.3fr,0.9fr] gap-6">
-
         {/* LEFT: DELIVERY FORM */}
         <div className="p-6 rounded-2xl shadow-xl bg-white/70 backdrop-blur-lg border border-gray-200">
           <h2 className="text-xl font-semibold mb-4 text-gray-800">
@@ -35,7 +39,6 @@ const DeliveryForm = () => {
           </h2>
 
           <form className="space-y-5">
-
             {/* FULL NAME + PHONE NUMBER */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -47,10 +50,17 @@ const DeliveryForm = () => {
                   name="fullName"
                   value={form.fullName}
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-400 rounded-xl"
+                  className={`w-full p-3 border rounded-xl ${
+                    formErrors.fullName ? "border-red-500" : "border-gray-400"
+                  }`}
                   placeholder="Enter your full name"
                   required
                 />
+                {formErrors.fullName && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {formErrors.fullName}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -62,10 +72,19 @@ const DeliveryForm = () => {
                   name="phoneNumber"
                   value={form.phoneNumber}
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-400 rounded-xl"
+                  className={`w-full p-3 border rounded-xl ${
+                    formErrors.phoneNumber
+                      ? "border-red-500"
+                      : "border-gray-400"
+                  }`}
                   placeholder="Enter phone number"
                   required
                 />
+                {formErrors.phoneNumber && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {formErrors.phoneNumber}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -80,10 +99,19 @@ const DeliveryForm = () => {
                   name="addressLine1"
                   value={form.addressLine1}
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-400 rounded-xl"
+                  className={`w-full p-3 border rounded-xl ${
+                    formErrors.addressLine1
+                      ? "border-red-500"
+                      : "border-gray-400"
+                  }`}
                   placeholder="Street, House No."
                   required
                 />
+                {formErrors.addressLine1 && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {formErrors.addressLine1}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -111,17 +139,27 @@ const DeliveryForm = () => {
                   name="city"
                   value={form.city}
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-400 rounded-xl bg-white"
+                  className={`w-full p-3 border rounded-xl bg-white ${
+                    formErrors.city ? "border-red-500" : "border-gray-400"
+                  }`}
                   required
                 >
                   <option value="">Select City</option>
-                  <option>Delhi</option>
-                  <option>Mumbai</option>
-                  <option>Bengaluru</option>
-                  <option>Hyderabad</option>
-                  <option>Chennai</option>
-                  <option>Pune</option>
+                  <option value="HAMILTON">Hamilton</option>
+                  <option value="TORONTO">Toronto</option>
+                  <option value="BURLINGTON">Burlington</option>
+                  <option value="OAKVILLE">Oakville</option>
+                  <option value="MISSISSAUGA">Mississauga</option>
+                  <option value="BRAMPTON">Brampton</option>
+                  <option value="EAST YORK">East York</option>
+                  <option value="NORTH YORK">North York</option>
+                  <option value="SCARBOROUGH">Scarborough</option>
+                  <option value="ETOBICOKE">Etobicoke</option>
+                  <option value="MILTON">Milton</option>
                 </select>
+                {formErrors.city && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.city}</p>
+                )}
               </div>
 
               <div>
@@ -133,10 +171,17 @@ const DeliveryForm = () => {
                   name="postalCode"
                   value={form.postalCode}
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-400 rounded-xl"
+                  className={`w-full p-3 border rounded-xl ${
+                    formErrors.postalCode ? "border-red-500" : "border-gray-400"
+                  }`}
                   placeholder="Enter postal code"
                   required
                 />
+                {formErrors.postalCode && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {formErrors.postalCode}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -164,7 +209,11 @@ const DeliveryForm = () => {
                 name="deliveryInstruction"
                 value={form.deliveryInstruction}
                 onChange={handleChange}
-                className="w-full p-3 border border-gray-400 rounded-xl bg-white"
+                className={`w-full p-3 border rounded-xl bg-white ${
+                  formErrors.deliveryInstruction
+                    ? "border-red-500"
+                    : "border-gray-400"
+                }`}
                 required
               >
                 <option value="">Select Instruction</option>
@@ -173,26 +222,40 @@ const DeliveryForm = () => {
                 <option>Lobby</option>
                 <option>Apartment Doorstep</option>
               </select>
+              {formErrors.deliveryInstruction && (
+                <p className="text-red-500 text-xs mt-1">
+                  {formErrors.deliveryInstruction}
+                </p>
+              )}
             </div>
 
             {/* TERMS */}
-            <div className="flex items-center gap-2 mt-3">
-              <input
-                type="checkbox"
-                name="acceptTerms"
-                checked={form.acceptTerms}
-                onChange={handleChange}
-                className="h-5 w-5"
-                required
-              />
-              <label className="text-gray-700 text-sm">
-                I accept the terms & conditions
-              </label>
+            <div className="mt-3">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="acceptTerms"
+                  checked={form.acceptTerms}
+                  onChange={handleChange}
+                  className="h-5 w-5"
+                  required
+                />
+                <label className="text-gray-700 text-sm">
+                  I accept the terms & conditions
+                </label>
+              </div>
+              {formErrors.acceptTerms && (
+                <p className="text-red-500 text-xs mt-1">
+                  {formErrors.acceptTerms}
+                </p>
+              )}
             </div>
 
             {/* Square Payment */}
-            <SquarePayment />
-
+            <SquarePayment
+              formData={form}
+              onValidationErrors={(errors) => setFormErrors(errors)}
+            />
           </form>
         </div>
 
@@ -201,8 +264,6 @@ const DeliveryForm = () => {
           <AddToCart />
         </div>
       </div>
-     
-      
     </>
   );
 };

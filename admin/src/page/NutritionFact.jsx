@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const API_URL = "https://food-ca-xa3o.vercel.app/api/nutrition-facts";
+const API_URL = `${import.meta.env.VITE_API_URL}/nutrition-facts`;
 
 export default function NutritionFact() {
   const [facts, setFacts] = useState([]);

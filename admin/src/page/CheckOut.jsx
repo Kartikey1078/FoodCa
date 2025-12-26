@@ -34,7 +34,8 @@ const Icons = {
   ),
 };
 
-const API_URL = "https://food-ca-xa3o.vercel.app/api/checkout";
+
+const API_URL = `${import.meta.env.VITE_API_URL}/checkout`;
 
 export default function CheckOut() {
   const [items, setItems] = useState([]);

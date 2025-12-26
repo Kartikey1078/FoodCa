@@ -3,6 +3,7 @@ import { useCart } from "../context/CartContext";
 import AddToCart from "./AddToCart";
 import TagFilters from "./TagFilters";
 import CheckoutSkeletonGrid from "./CheckoutSkeleton";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // --------------------------------------------------
 // Icons
@@ -130,7 +131,6 @@ const CheckoutCard = ({ meal }) => {
       quantity,
       price,
       image,
-      
     });
 
     setAdded(true);
@@ -141,7 +141,7 @@ const CheckoutCard = ({ meal }) => {
   return (
     <div className="relative flex flex-col w-full max-w-[330px] bg-white rounded-3xl shadow-xl overflow-hidden border border-white m-3 sm:max-w-[350px] md:h-[540px] lg:h-[560px]">
       {/* Image */}
-      
+
       <div className="relative h-40 sm:h-48 w-full">
         <img src={image} alt={title} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-90" />
@@ -201,14 +201,14 @@ const CheckoutCard = ({ meal }) => {
                     const isOddTotal = options.length % 2 === 1;
                     const isLastItem = idx === options.length - 1;
                     const shouldCenter = isOddTotal && isLastItem;
-                    
+
                     return (
                       <button
                         key={opt}
                         onClick={() => handleOptionSelect(opt)}
                         className={`py-1.5 px-2 rounded-xl border font-semibold truncate transition-all ${
-                          shouldCenter 
-                            ? "col-span-2 justify-self-center max-w-[calc(50%-0.1875rem)] w-[calc(50%-0.1875rem)]" 
+                          shouldCenter
+                            ? "col-span-2 justify-self-center max-w-[calc(50%-0.1875rem)] w-[calc(50%-0.1875rem)]"
                             : "w-full"
                         } ${
                           active
@@ -326,10 +326,13 @@ const MenuPage = () => {
     const fetchMeals = async () => {
       try {
         setLoading(true);
-        const url = selectedTag === "All" 
-          ? "https://food-ca-xa3o.vercel.app/api/checkout"
-          : `https://food-ca-xa3o.vercel.app/api/checkout/tags?tag=${encodeURIComponent(selectedTag)}`;
-        
+        const url =
+          selectedTag === "All"
+            ? `${API_BASE_URL}/checkout`
+            : `${API_BASE_URL}/checkout/tags?tag=${encodeURIComponent(
+                selectedTag
+              )}`;
+
         const res = await fetch(url);
         const data = await res.json();
 
@@ -357,7 +360,6 @@ const MenuPage = () => {
         <div className="max-w-7xl mx-auto">
           {/* Desktop layout: cards left + cart right */}
           <div className="flex flex-col lg:flex-row lg:items-start gap-6">
-            
             {/* Meals grid */}
             <div className="flex-1">
               {loading ? (
@@ -365,7 +367,9 @@ const MenuPage = () => {
               ) : (
                 <div className="flex flex-wrap justify-center lg:justify-start w-full">
                   {meals.length > 0 ? (
-                    meals.map((meal, idx) => <CheckoutCard key={idx} meal={meal} />)
+                    meals.map((meal, idx) => (
+                      <CheckoutCard key={idx} meal={meal} />
+                    ))
                   ) : (
                     <p className="text-gray-600 text-sm">No meals available.</p>
                   )}
@@ -377,7 +381,6 @@ const MenuPage = () => {
             <div className="w-full lg:w-[350px] lg:sticky lg:top-6">
               <AddToCart />
             </div>
-
           </div>
         </div>
       </div>

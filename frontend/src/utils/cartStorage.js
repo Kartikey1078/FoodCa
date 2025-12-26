@@ -1,5 +1,6 @@
 export const CART_STORAGE_KEY = "foodapp_cart";
 export const CART_UPDATED_EVENT = "cartUpdated";
+export const CHECKOUT_TOTAL_UPDATED_EVENT = "checkoutTotalUpdated";
 export const SPLIT_MEAL_STORAGE_KEY = "foodapp_split_schedule";
 
 const safeParse = (raw) => {

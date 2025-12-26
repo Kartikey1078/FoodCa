@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom"; 
 import SwiperComponent2 from "./SwiperComponent2"; 
-// import images from "../constants/images"; // COMMENTED: file not found
-// import items from "../constants/items"; // COMMENTED: file not found
+
 
 const BalancedMealSection = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);

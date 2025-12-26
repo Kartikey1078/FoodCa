@@ -7,6 +7,7 @@ import SelectPlan from './page/SelectPlan';
 import CheckOut from './page/CheckOut';
 import TagAdmin from './page/TagAdmin';
 import NutritionFact from './page/NutritionFact';
+import Orders from './page/Orders';
 
 const App = () => {
   return (
@@ -20,8 +21,9 @@ const App = () => {
           <Route path="/" element={<h2>Dashboard</h2>} />
           <Route path="/plans" element={<SelectPlan />} />
           <Route path="/CheckOut" element={<CheckOut />} />
-          <Route path="/TagAdmin" element={<TagAdmin />} />
+          <Route path="/nutrition-tags" element={<TagAdmin />} />
           <Route path="/nutrition-facts" element={<NutritionFact />} />
+          <Route path="/orders" element={<Orders />} />
         </Routes>
 
       </main>

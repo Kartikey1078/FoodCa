@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const API_URL = "https://food-ca-xa3o.vercel.app/api/tags";
+// const API_URL = "https://food-ca-xa3o.vercel.app/api/tags";
+const API_URL = `${import.meta.env.VITE_API_URL}/tags`;
+
 
 const TagFilters = ({ onTagSelect }) => {
   const [tags, setTags] = useState([]);

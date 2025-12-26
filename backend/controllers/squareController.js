@@ -1,6 +1,7 @@
 import pkg from "square";
 import dotenv from "dotenv";
 import { v4 as uuidv4 } from "uuid";
+import Order from "../models/order.js";
 
 dotenv.config();
 
@@ -17,7 +18,7 @@ const client = new Client({
 
 export const handleSquarePayment = async (req, res) => {
   try {
-    const { token, amount } = req.body;
+    const { token, amount, orderData } = req.body;
 
     if (!token || !amount) {
       return res.status(400).json({
@@ -49,10 +50,75 @@ export const handleSquarePayment = async (req, res) => {
       )
     );
 
+    // Save order to database if orderData is provided
+    let savedOrder = null;
+    if (orderData && response.result.payment.status === "COMPLETED") {
+      try {
+        // Map delivery instruction to match enum values
+        const deliveryInstructionMap = {
+          "Front Door": "FRONT DOOR FREE",
+          "Back Door": "BACKDOOR FREE",
+          "Lobby": "LOBBY FREE",
+          "Apartment Doorstep": "DOORSTEP DELIVERY AT APARTMENT @$10",
+        };
+
+        const mappedDeliveryInstruction = 
+          deliveryInstructionMap[orderData.deliveryInstruction] || 
+          orderData.deliveryInstruction.toUpperCase() || 
+          "FRONT DOOR FREE";
+
+        // Map city to match enum values (convert to uppercase and handle variations)
+        const cityMap = {
+          "Delhi": "TORONTO",
+          "Mumbai": "TORONTO",
+          "Bengaluru": "TORONTO",
+          "Hyderabad": "TORONTO",
+          "Chennai": "TORONTO",
+          "Pune": "TORONTO",
+        };
+        
+        const mappedCity = cityMap[orderData.city] || 
+          (orderData.city ? orderData.city.toUpperCase() : "TORONTO");
+
+        // Calculate delivery fee
+        let deliveryFee = 0;
+        if (mappedDeliveryInstruction === "DOORSTEP DELIVERY AT APARTMENT @$10") {
+          deliveryFee = 10;
+        }
+
+        // Prepare order data
+        const orderPayload = {
+          fullName: orderData.fullName || "",
+          coupon: orderData.couponCode || "",
+          addressLine1: orderData.addressLine1 || "",
+          addressLine2: orderData.addressLine2 || "",
+          city: mappedCity,
+          postalCode: orderData.postalCode || "",
+          phoneNumber: orderData.phoneNumber || "",
+          deliveryInstructions: mappedDeliveryInstruction,
+          cartItems: orderData.cartItems || [],
+          planInfo: orderData.planInfo || {},
+          totalMeals: orderData.totalMeals || 0,
+          extraMeals: orderData.extraMeals || 0,
+          extraMealCost: orderData.extraMealCost || 0,
+          planPrice: orderData.planPrice || 0,
+          deliveryFee,
+          grandTotal: orderData.grandTotal || amount / 100,
+          status: "pending",
+        };
+
+        savedOrder = await Order.create(orderPayload);
+      } catch (orderError) {
+        console.error("Error saving order:", orderError);
+        // Don't fail the payment if order save fails, but log it
+      }
+    }
+
     res.json({
       success: true,
       message: "Payment Successful!",
       payment: safePayment,
+      order: savedOrder,
     });
   } catch (err) {
     console.error("Square Error:", err);

@@ -4,6 +4,10 @@ import dotenv from "dotenv";
 
 dotenv.config();
 const router = express.Router();
+console.log("🔑 STRIPE_SECRET_KEY =", process.env.STRIPE_SECRET_KEY);
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error("STRIPE_SECRET_KEY is missing");
+}
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 router.post("/create-checkout-session", async (req, res) => {

@@ -20,7 +20,19 @@ const deliveryDetailsSchema = new mongoose.Schema(
     city: {
       type: String,
       required: true,
-      enum: ["Delhi", "Mumbai", "Bengaluru", "Hyderabad", "Chennai", "Pune"],
+      enum: [
+        "HAMILTON",
+        "TORONTO",
+        "BURLINGTON",
+        "OAKVILLE",
+        "MISSISSAUGA",
+        "BRAMPTON",
+        "EAST YORK",
+        "NORTH YORK",
+        "SCARBOROUGH",
+        "ETOBICOKE",
+        "MILTON",
+      ],
     },
 
     postalCode: {

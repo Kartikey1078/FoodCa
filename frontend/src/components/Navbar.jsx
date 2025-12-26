@@ -51,7 +51,7 @@ const Navbar = () => {
       { 
       cartCount > 0 && (
         <span className="absolute -top-1.5 -right-1.5 min-w-[18px] px-1 py-0.5 text-[11px] font-bold text-white bg-BM_Green rounded-full">
-          {cartCount}
+          {cartCount} 
         </span>
       )}
     </button>

@@ -3,6 +3,8 @@ import axios from "axios";
 
 // ENV BASE URL
 const API_BASE = `${import.meta.env.VITE_API_URL}/plans`;
+console.log("VITE_API_URL =>", import.meta.env.VITE_API_URL);
+console.log("API_BASE =>", API_BASE);
 
 const Plan = () => {
   const [plans, setPlans] = useState([]);
@@ -22,7 +24,9 @@ const Plan = () => {
   const fetchPlans = async () => {
     try {
       const res = await axios.get(API_BASE);
+      console.log("API RESPONSE =>", res.data);
       setPlans(res.data);
+      
     } catch (err) {
       console.error("Fetch error:", err);
     }
