@@ -8,6 +8,12 @@ import { useLocation } from "react-router-dom";
 import { CHECKOUT_TOTAL_UPDATED_EVENT } from "../utils/cartStorage";
 
 const AddToCart = () => {
+  const safeNumber = (value) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+  };
+  
+
   const [minMealError, setMinMealError] = useState("");
   const [isMinMealModalOpen, setIsMinMealModalOpen] = useState(false);
   const navigate = useNavigate();
@@ -26,20 +32,25 @@ const AddToCart = () => {
 
   // ---- EXTRACT PLAN INFO ----
   const getPlanInfo = (plan) => {
-    if (!plan) return {};
+    if (!plan)
+      return {
+        title: "",
+        price: 0,
+        extraMealPrice: 0,
+        minMeals: 0,
+      };
+    
 
     return {
       title:
         plan.attributes?.plan_title || plan.title || "Plan Title Not Found",
-      minMeals:
-        Number(plan.attributes?.minimum_meal_count) ||
-        Number(plan.numberOfMeals) ||
-        0,
-      price: Number(plan.attributes?.price) || Number(plan.price) || 0,
-      extraMealPrice:
-        Number(plan.attributes?.extra_meal_price) ||
-        Number(plan.extraMealPrice) ||
-        0,
+        price: safeNumber(plan.attributes?.price ?? plan.price),
+        extraMealPrice: safeNumber(
+          plan.attributes?.extra_meal_price ?? plan.extraMealPrice
+        ),
+        minMeals: safeNumber(
+          plan.attributes?.minimum_meal_count ?? plan.numberOfMeals
+        ),
     };
   };
 
@@ -47,9 +58,10 @@ const AddToCart = () => {
 
   // ---- TOTAL MEALS ----
   const totalMeals = items.reduce(
-    (sum, item) => sum + Number(item.quantity),
+    (sum, item) => sum + safeNumber(item.quantity),
     0
   );
+  
 
   // ---- EFFECTIVE EXTRA MEAL PRICE ----
   const effectiveExtraMealPrice =
@@ -59,14 +71,14 @@ const AddToCart = () => {
   const extraMeals =
     totalMeals > planInfo.minMeals ? totalMeals - planInfo.minMeals : 0;
 
-  const extraMealCost = extraMeals * effectiveExtraMealPrice;
+    const extraMealCost = safeNumber(extraMeals * effectiveExtraMealPrice);
 
   // ---- CHECK MINIMUM MEALS CONDITION ----
   const meetsMinimumMeals =
     planInfo.minMeals > 0 ? totalMeals >= planInfo.minMeals : true;
 
   // ---- NEW GRAND TOTAL (Plan Price + extra meal charges) ----
-  const grandTotal = planInfo.price + extraMealCost;
+  const grandTotal = safeNumber(planInfo.price + extraMealCost);
 
   // Use refs to track previous values and prevent duplicate saves
   const prevItemsRef = useRef(null);
@@ -213,7 +225,7 @@ const AddToCart = () => {
             {/* EXTRA MEAL PRICE ALWAYS SHOWN */}
             <p>
               <span className="font-semibold">Extra Meal Price: </span>$
-              {effectiveExtraMealPrice.toFixed(2)}
+              {safeNumber(effectiveExtraMealPrice).toFixed(2)}
               {totalMeals >= 10 && (
                 <span className="text-xs text-gray-500 ml-1">
                   (Bulk discount applied)
@@ -225,7 +237,7 @@ const AddToCart = () => {
             {extraMeals > 0 && (
               <p className="text-emerald-600 font-medium">
                 Extra Meals: {extraMeals} × $
-                {effectiveExtraMealPrice.toFixed(2)} = $
+                {safeNumber(effectiveExtraMealPrice).toFixed(2)} = $
                 {extraMealCost.toFixed(2)}
               </p>
             )}
@@ -339,19 +351,19 @@ const AddToCart = () => {
           <div className="border-t border-dashed pt-4 mt-4 text-sm">
             <div className="flex justify-between">
               <span>Plan Price</span>
-              <span>${planInfo.price.toFixed(2)}</span>
+              <span>${safeNumber(planInfo.price).toFixed(2)}</span>
             </div>
 
             {extraMeals > 0 && (
               <div className="flex justify-between mt-2 text-emerald-600">
                 <span>Extra Meal Charges</span>
-                <span>${extraMealCost.toFixed(2)}</span>
+                <span>${safeNumber(extraMealCost).toFixed(2)}</span>
               </div>
             )}
 
             <div className="flex justify-between text-base font-bold mt-4">
               <span>Grand Total</span>
-              <span>${grandTotal.toFixed(2)}</span>
+              <span>${safeNumber(grandTotal).toFixed(2)}</span>
             </div>
 
             {/* MINIMUM MEAL WARNING */}
