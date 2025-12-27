@@ -17,16 +17,25 @@ import nutritionFactsRoutes from "./routes/nutritionFactsRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 
 /* =========================
-   ENV + DB
+   ENV
 ========================= */
 dotenv.config();
-connectDB();
+
+/* =========================
+   DB CONNECT (Vercel-safe)
+========================= */
+let isDbConnected = false;
+const connectOnce = async () => {
+  if (!isDbConnected) {
+    await connectDB();
+    isDbConnected = true;
+  }
+};
 
 /* =========================
    APP INIT
 ========================= */
 const app = express();
-const PORT = process.env.PORT || 6001;
 
 /* =========================
    BODY PARSERS
@@ -35,13 +44,13 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 /* =========================
-   CORS CONFIG (FINAL)
+   CORS CONFIG
 ========================= */
 app.use(
   cors({
     origin: [
-      "https://food-ca.vercel.app",       // Frontend
-      "https://food-ca-hkw4.vercel.app",  // Admin
+      "https://food-ca.vercel.app",
+      "https://food-ca-hkw4.vercel.app",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -49,19 +58,28 @@ app.use(
   })
 );
 
-// Preflight support (VERY IMPORTANT)
 app.options("*", cors());
 
 /* =========================
-   ROOT ROUTE
+   DB MIDDLEWARE
 ========================= */
-app.get("/", (req, res) => {
-  res.json({ message: "Backend running successfully 🚀" });
+app.use(async (req, res, next) => {
+  try {
+    await connectOnce();
+    next();
+  } catch (err) {
+    console.error("DB connection failed:", err);
+    res.status(500).json({ message: "Database connection error" });
+  }
 });
 
 /* =========================
-   CORS TEST ROUTE
+   ROUTES
 ========================= */
+app.get("/", (req, res) => {
+  res.json({ message: "Backend running on Vercel 🚀" });
+});
+
 app.get("/api/cors-test", (req, res) => {
   res.json({
     success: true,
@@ -69,9 +87,6 @@ app.get("/api/cors-test", (req, res) => {
   });
 });
 
-/* =========================
-   API ROUTES
-========================= */
 app.use("/api/items", itemRoutes);
 app.use("/api/plans", SelectPlan);
 app.use("/api/checkout", checkoutRoutes);
@@ -89,7 +104,6 @@ app.use("/api/orders", orderRoutes);
 app.use((err, req, res, next) => {
   console.error("🔥 ERROR:", err);
 
-  // Multer error
   if (err instanceof multer.MulterError) {
     return res.status(400).json({
       success: false,
@@ -99,18 +113,9 @@ app.use((err, req, res, next) => {
 
   res.status(err?.status || 500).json({
     success: false,
-    message: err?.message || "Internal Server Error hi",
+    message: err?.message || "Internal Server Error",
   });
 });
-
-/* =========================
-   LOCAL SERVER
-// ========================= */
-// if (process.env.NODE_ENV !== "production") {
-//   app.listen(PORT, () => {
-//     console.log(`🚀 Server running on http://localhost:${PORT}`);
-//   });
-// }
 
 /* =========================
    EXPORT FOR VERCEL
