@@ -15,6 +15,7 @@ import stripeRoutes from "./routes/stripeRoutes.js";
 import squareRoutes from "./routes/squareRoutes.js";
 import nutritionFactsRoutes from "./routes/nutritionFactsRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import recipeRoutes from "./routes/recipeRoutes.js";
 
 /* =========================
    ENV
