@@ -16,7 +16,7 @@ import squareRoutes from "./routes/squareRoutes.js";
 import nutritionFactsRoutes from "./routes/nutritionFactsRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import recipeRoutes from "./routes/recipeRoutes.js";
-import clerkWebhook from "./routes/clerkWebhook.js";
+import clerkWebhook from "./api/webhooks/clerk.js";
 
 /* =========================
    ENV
@@ -61,12 +61,6 @@ app.use(
 );
 
 /* =========================
-   BODY PARSERS
-========================= */
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
-
-/* =========================
    WEBHOOKS (Raw Body) - BEFORE JSON PARSER
 ========================= */
 app.post(
@@ -74,6 +68,13 @@ app.post(
   express.raw({ type: "application/json" }),
   clerkWebhook
 );
+
+
+/* =========================
+   BODY PARSERS
+========================= */
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 /* =========================
    DB MIDDLEWARE (Skip webhooks)
