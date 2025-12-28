@@ -11,10 +11,17 @@ import {
 
 const router = express.Router();
 
-router.post("/", upload.single("image"), createCheckout);         // Create with image
-router.get("/tags", getCheckoutsTags);    // Filter by tag (must come before /:id)
-router.get("/", getCheckouts);            // Read All
-router.get("/:id", getCheckoutById);      // Read One
-router.put("/:id", upload.single("image"), updateCheckout);       // Update (image optional)
-router.delete("/:id", deleteCheckout);    // Delete   
+// Multiple images upload
+const checkoutUpload = upload.fields([
+  { name: "image", maxCount: 1 },
+  { name: "nutritionValueImage", maxCount: 1 },
+]);
+
+router.post("/", checkoutUpload, createCheckout);
+router.get("/tags", getCheckoutsTags);
+router.get("/", getCheckouts);
+router.get("/:id", getCheckoutById);
+router.put("/:id", checkoutUpload, updateCheckout);
+router.delete("/:id", deleteCheckout);
+
 export default router;

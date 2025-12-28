@@ -1,185 +1,196 @@
-    import Checkout from "../models/checkout.js";
+import Checkout from "../models/checkout.js";
+// import cloudinary from "../config/cloudinary.js"; // agar delete karna ho
 
-    // CREATE
-    export const createCheckout = async (req, res) => {
-    try {
-        const { title, subtitle, nutrition, options, tags } = req.body;
-        
-        // Parse nutrition if it's a string
-        let nutritionData = nutrition;
-        if (typeof nutrition === 'string') {
-            try {
-                nutritionData = JSON.parse(nutrition);
-            } catch (e) {
-                nutritionData = [];
-            }
-        }
+// ===================== CREATE =====================
+export const createCheckout = async (req, res) => {
+  try {
+    const { title, subtitle, nutrition, options, tags } = req.body;
 
-        // Parse options if it's a string
-        let optionsData = options;
-        if (typeof options === 'string') {
-            optionsData = options.split(',').map(opt => opt.trim()).filter(opt => opt);
-        }
-
-        // Parse tags if it's a string
-        let tagsData = tags;
-        if (typeof tags === 'string') {
-            try {
-                tagsData = JSON.parse(tags);
-            } catch (e) {
-                tagsData = Array.isArray(tags) ? tags : [];
-            }
-        }
-
-        const itemData = {
-            title,
-            subtitle,
-            nutrition: nutritionData,
-            options: optionsData,
-            tags: tagsData,
-        };
-
-        // If image file is uploaded, use Cloudinary URL
-        if (req.file) {
-            itemData.image = req.file.path;
-            itemData.imagePublicId = req.file.filename;
-        } else if (req.body.image && typeof req.body.image === 'string' && req.body.image.startsWith('http')) {
-            // If image URL is provided directly (for existing images or direct URLs)
-            itemData.image = req.body.image;
-        } else {
-            return res.status(400).json({ success: false, message: "Image is required" });
-        }
-
-        const item = await Checkout.create(itemData);
-        res.status(201).json({ success: true, data: item });
-    } catch (error) {
-        console.error("Create checkout error:", error);
-        res.status(400).json({ success: false, message: error.message });
+    // ---------- Parse nutrition ----------
+    let nutritionData = nutrition;
+    if (typeof nutrition === "string") {
+      try {
+        nutritionData = JSON.parse(nutrition);
+      } catch {
+        nutritionData = [];
+      }
     }
+
+    // ---------- Parse options ----------
+    let optionsData = options;
+    if (typeof options === "string") {
+      optionsData = options
+        .split(",")
+        .map(opt => opt.trim())
+        .filter(Boolean);
+    }
+
+    // ---------- Parse tags ----------
+    let tagsData = tags;
+    if (typeof tags === "string") {
+      try {
+        tagsData = JSON.parse(tags);
+      } catch {
+        tagsData = [];
+      }
+    }
+
+    const itemData = {
+      title,
+      subtitle,
+      nutrition: nutritionData,
+      options: optionsData,
+      tags: tagsData,
     };
 
-    // READ ALL
-    export const getCheckouts = async (req, res) => {
-    try {
-        const items = await Checkout.find();
-        res.status(200).json({ success: true, data: items });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+    // ---------- Main image ----------
+    if (req.files?.image?.[0]) {
+      itemData.image = req.files.image[0].path;
+      itemData.imagePublicId = req.files.image[0].filename;
+    } else {
+      return res.status(400).json({ success: false, message: "Image is required" });
     }
-    };
 
-    // READ ONE BY ID
-    export const getCheckoutById = async (req, res) => {
-    try {
-        const item = await Checkout.findById(req.params.id);
-        if (!item) return res.status(404).json({ success: false, message: "Not found" });
-
-        res.status(200).json({ success: true, data: item });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+    // ---------- Nutrition Value Image ----------
+    if (req.files?.nutritionValueImage?.[0]) {
+      itemData.nutritionValueImage = req.files.nutritionValueImage[0].path;
+      itemData.nutritionValueImagePublicId =
+        req.files.nutritionValueImage[0].filename;
     }
-    };
 
-    // UPDATE
-    export const updateCheckout = async (req, res) => {
-    try {
-        const { title, subtitle, nutrition, options, tags } = req.body;
-        const updateData = {};
+    const item = await Checkout.create(itemData);
+    res.status(201).json({ success: true, data: item });
 
-        if (title) updateData.title = title;
-        if (subtitle) updateData.subtitle = subtitle;
+  } catch (error) {
+    console.error("Create checkout error:", error);
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
 
-        // Parse nutrition if provided
-        if (nutrition !== undefined) {
-            if (typeof nutrition === 'string') {
-                try {
-                    updateData.nutrition = JSON.parse(nutrition);
-                } catch (e) {
-                    updateData.nutrition = [];
-                }
-            } else {
-                updateData.nutrition = nutrition;
-            }
-        }
+// ===================== READ ALL =====================
+export const getCheckouts = async (req, res) => {
+  try {
+    const items = await Checkout.find();
+    res.status(200).json({ success: true, data: items });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
-        // Parse options if provided
-        if (options !== undefined) {
-            if (typeof options === 'string') {
-                updateData.options = options.split(',').map(opt => opt.trim()).filter(opt => opt);
-            } else {
-                updateData.options = options;
-            }
-        }
+// ===================== READ BY ID =====================
+export const getCheckoutById = async (req, res) => {
+  try {
+    const item = await Checkout.findById(req.params.id);
+    if (!item)
+      return res.status(404).json({ success: false, message: "Not found" });
 
-        // Parse tags if provided
-        if (tags !== undefined) {
-            if (typeof tags === 'string') {
-                try {
-                    updateData.tags = JSON.parse(tags);
-                } catch (e) {
-                    updateData.tags = Array.isArray(tags) ? tags : [];
-                }
-            } else {
-                updateData.tags = tags;
-            }
-        }
+    res.status(200).json({ success: true, data: item });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
-        // If new image is uploaded, update image fields
-        if (req.file) {
-            // Get old item to potentially delete old image from Cloudinary
-            const oldItem = await Checkout.findById(req.params.id);
-            if (oldItem && oldItem.imagePublicId) {
-                // Note: You might want to delete the old image from Cloudinary here
-            }
-            updateData.image = req.file.path;
-            updateData.imagePublicId = req.file.filename;
-        } else if (req.body.image && typeof req.body.image === 'string' && req.body.image.startsWith('http')) {
-            // If image URL is provided directly (keep existing or update URL)
-            updateData.image = req.body.image;
-        }
-        // If no image provided, keep existing image (don't update image field)
+// ===================== UPDATE =====================
+export const updateCheckout = async (req, res) => {
+  try {
+    const { title, subtitle, nutrition, options, tags } = req.body;
+    const updateData = {};
 
-        const item = await Checkout.findByIdAndUpdate(req.params.id, updateData, {
-            new: true,
-            runValidators: true,
-        });
+    if (title) updateData.title = title;
+    if (subtitle) updateData.subtitle = subtitle;
 
-        if (!item) return res.status(404).json({ success: false, message: "Not found" });
-
-        res.status(200).json({ success: true, data: item });
-    } catch (error) {
-        console.error("Update checkout error:", error);
-        res.status(400).json({ success: false, message: error.message });
-    }
-    };
-
-    // DELETE
-    export const deleteCheckout = async (req, res) => {
-    try {
-        const item = await Checkout.findByIdAndDelete(req.params.id);
-        if (!item) return res.status(404).json({ success: false, message: "Not found" });
-
-        res.status(200).json({ success: true, message: "Deleted successfully" });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-    };
-    //
-
-    export const getCheckoutsTags = async (req, res) => {
+    // ---------- Nutrition ----------
+    if (nutrition !== undefined) {
+      if (typeof nutrition === "string") {
         try {
-          const { tag } = req.query;
-      
-          let query = {};
-          if (tag && tag !== "All") {
-            // Filter items where tags array contains the selected tag
-            query = { tags: tag };
-          }
-      
-          const items = await Checkout.find(query);
-          res.json({ success: true, data: items });
-        } catch (err) {
-          console.error(err);
-          res.status(500).json({ success: false, message: "Server error" });
+          updateData.nutrition = JSON.parse(nutrition);
+        } catch {
+          updateData.nutrition = [];
         }
-      };
+      } else {
+        updateData.nutrition = nutrition;
+      }
+    }
+
+    // ---------- Options ----------
+    if (options !== undefined) {
+      updateData.options =
+        typeof options === "string"
+          ? options.split(",").map(o => o.trim()).filter(Boolean)
+          : options;
+    }
+
+    // ---------- Tags ----------
+    if (tags !== undefined) {
+      if (typeof tags === "string") {
+        try {
+          updateData.tags = JSON.parse(tags);
+        } catch {
+          updateData.tags = [];
+        }
+      } else {
+        updateData.tags = tags;
+      }
+    }
+
+    const oldItem = await Checkout.findById(req.params.id);
+    if (!oldItem)
+      return res.status(404).json({ success: false, message: "Not found" });
+
+    // ---------- Update main image ----------
+    if (req.files?.image?.[0]) {
+      // cloudinary.uploader.destroy(oldItem.imagePublicId);
+      updateData.image = req.files.image[0].path;
+      updateData.imagePublicId = req.files.image[0].filename;
+    }
+
+    // ---------- Update nutrition value image ----------
+    if (req.files?.nutritionValueImage?.[0]) {
+      // cloudinary.uploader.destroy(oldItem.nutritionValueImagePublicId);
+      updateData.nutritionValueImage =
+        req.files.nutritionValueImage[0].path;
+      updateData.nutritionValueImagePublicId =
+        req.files.nutritionValueImage[0].filename;
+    }
+
+    const updatedItem = await Checkout.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json({ success: true, data: updatedItem });
+
+  } catch (error) {
+    console.error("Update checkout error:", error);
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// ===================== DELETE =====================
+export const deleteCheckout = async (req, res) => {
+  try {
+    const item = await Checkout.findByIdAndDelete(req.params.id);
+    if (!item)
+      return res.status(404).json({ success: false, message: "Not found" });
+
+    // cloudinary.uploader.destroy(item.imagePublicId);
+    // cloudinary.uploader.destroy(item.nutritionValueImagePublicId);
+
+    res.status(200).json({ success: true, message: "Deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ===================== FILTER BY TAG =====================
+export const getCheckoutsTags = async (req, res) => {
+  try {
+    const { tag } = req.query;
+    const query = tag && tag !== "All" ? { tags: tag } : {};
+    const items = await Checkout.find(query);
+    res.json({ success: true, data: items });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};

@@ -15,6 +15,7 @@ import stripeRoutes from "./routes/stripeRoutes.js";
 import squareRoutes from "./routes/squareRoutes.js";
 import nutritionFactsRoutes from "./routes/nutritionFactsRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import recipeRoutes from "./routes/recipeRoutes.js";
 
 /* =========================
    ENV
@@ -22,13 +23,14 @@ import orderRoutes from "./routes/orderRoutes.js";
 dotenv.config();
 
 /* =========================
-   DB CONNECT (Vercel-safe)
+   DB CONNECT
 ========================= */
 let isDbConnected = false;
 const connectOnce = async () => {
   if (!isDbConnected) {
     await connectDB();
     isDbConnected = true;
+    console.log("✅ MongoDB connected");
   }
 };
 
@@ -44,21 +46,27 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 /* =========================
-   CORS CONFIG
+   CORS CONFIG (USING .env)
 ========================= */
+const allowedOrigins = [
+  process.env.FRONTEND_ORIGIN || "http://localhost:5173",
+  process.env.ADMIN_ORIGIN || "http://localhost:5174",
+];
+
 app.use(
   cors({
-    origin: [
-      "https://food-ca.vercel.app",
-      "https://food-ca-hkw4.vercel.app",
-    ],
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-
-app.options("*", cors());
 
 /* =========================
    DB MIDDLEWARE
@@ -68,7 +76,7 @@ app.use(async (req, res, next) => {
     await connectOnce();
     next();
   } catch (err) {
-    console.error("DB connection failed:", err);
+    console.error("🔥 DB connection failed:", err);
     res.status(500).json({ message: "Database connection error" });
   }
 });
@@ -77,7 +85,7 @@ app.use(async (req, res, next) => {
    ROUTES
 ========================= */
 app.get("/", (req, res) => {
-  res.json({ message: "Backend running on Vercel 🚀" });
+  res.json({ message: "Backend running locally 🚀" });
 });
 
 app.get("/api/cors-test", (req, res) => {
@@ -97,6 +105,7 @@ app.use("/api/stripe", stripeRoutes);
 app.use("/api/square", squareRoutes);
 app.use("/api/nutrition-facts", nutritionFactsRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/recipes", recipeRoutes);
 
 /* =========================
    ERROR HANDLER
@@ -118,6 +127,10 @@ app.use((err, req, res, next) => {
 });
 
 /* =========================
-   EXPORT FOR VERCEL
+   LOCAL SERVER LISTEN
 ========================= */
-export default app;
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`✅ Server running locally on http://localhost:${PORT}`);
+});

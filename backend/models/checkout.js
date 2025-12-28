@@ -37,6 +37,13 @@ const checkOutSchema = new mongoose.Schema({
     type: [String],   
     default: [],
   },
+  nutritionValueImage: {
+    type: String,
+    required: false,
+   },
+   nutritionValueImagePublicId: {
+    type: String,
+   },
 }, {
   timestamps: true,
 });
