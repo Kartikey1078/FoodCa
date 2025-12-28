@@ -1,5 +1,4 @@
 import { Webhook } from "svix";
-import { buffer } from "micro";
 import connectDB from "../../config/db.js";
 import User from "../../models/User.js";
 
@@ -11,18 +10,23 @@ export const config = {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).end();
   }
 
   await connectDB();
 
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
   if (!WEBHOOK_SECRET) {
-    return res.status(500).json({ error: "Missing webhook secret" });
+    console.error("❌ Missing CLERK_WEBHOOK_SECRET");
+    return res.status(500).end();
   }
 
-  // Read raw body (Vercel-safe)
-  const payload = (await buffer(req)).toString();
+  // ✅ Collect raw body manually (Vercel safe)
+  const chunks = [];
+  for await (const chunk of req) {
+    chunks.push(chunk);
+  }
+  const payload = Buffer.concat(chunks).toString("utf8");
 
   const headers = {
     "svix-id": req.headers["svix-id"],
@@ -36,8 +40,8 @@ export default async function handler(req, res) {
     const wh = new Webhook(WEBHOOK_SECRET);
     event = wh.verify(payload, headers);
   } catch (err) {
-    console.error("❌ Webhook verification failed:", err);
-    return res.status(400).json({ error: "Invalid signature" });
+    console.error("❌ Webhook verification failed:", err.message);
+    return res.status(400).end();
   }
 
   const { type, data } = event;
@@ -67,9 +71,9 @@ export default async function handler(req, res) {
       await User.findOneAndDelete({ clerkUserId: data.id });
     }
 
-    return res.status(200).json({ received: true });
-  } catch (dbErr) {
-    console.error("❌ DB error:", dbErr);
-    return res.status(500).json({ error: "Database error" });
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("❌ Database error:", err);
+    return res.status(500).end();
   }
 }
