@@ -34,7 +34,6 @@ const Icons = {
   ),
 };
 
-
 const API_URL = `${import.meta.env.VITE_API_URL}/checkout`;
 
 export default function CheckOut() {
@@ -55,42 +54,61 @@ export default function CheckOut() {
     options: "",
     tags: [], // Added tags array
     nutrition: [], // Nutrition facts array
+    nutritionValueImage: "",
+    nutritionValueImageFile: null,
   });
   const [imagePreview, setImagePreview] = useState(null);
+  const [imagePreview2, setImagePreview2] = useState(null);
   const [uploading, setUploading] = useState(false);
 
   // Handle image file selection
-  const handleImageUpload = (e) => {
+  const handleMainImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    const validTypes = ["image/jpeg", "image/jpg", "image/png"];
     if (!validTypes.includes(file.type)) {
-      alert('Please select a JPEG, JPG, or PNG image file');
-      e.target.value = ''; // Clear the input
+      alert("Only JPG, JPEG, PNG allowed");
       return;
     }
 
-    // Validate file size (5MB limit)
-    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-    if (file.size > maxSize) {
-      alert('File size is too large. Maximum size is 5MB. Please compress the image or choose a smaller file.');
-      e.target.value = ''; // Clear the input
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Max size 5MB");
       return;
     }
 
-    // Store the file for upload
     setFormData((prev) => ({
       ...prev,
       imageFile: file,
     }));
 
-    // Create preview
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result);
-    };
+    reader.onloadend = () => setImagePreview(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleNutritionImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const validTypes = ["image/jpeg", "image/jpg", "image/png"];
+    if (!validTypes.includes(file.type)) {
+      alert("Only JPG, JPEG, PNG allowed");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Max size 5MB");
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      nutritionValueImageFile: file,
+    }));
+
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview2(reader.result);
     reader.readAsDataURL(file);
   };
 
@@ -101,7 +119,7 @@ export default function CheckOut() {
       setError(null);
       const res = await axios.get(API_URL);
       console.log("API Response:", res.data); // Debug log
-      
+
       if (res.data.success && Array.isArray(res.data.data)) {
         setItems(res.data.data);
       } else {
@@ -111,7 +129,11 @@ export default function CheckOut() {
       }
     } catch (err) {
       console.error("Failed to load items:", err);
-      setError(err.response?.data?.message || err.message || "Failed to load checkout items");
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Failed to load checkout items"
+      );
       setItems([]);
     } finally {
       setLoading(false);
@@ -175,10 +197,16 @@ export default function CheckOut() {
 
     try {
       const formDataToSend = new FormData();
-      
+
       // Add image file if new image is selected
       if (formData.imageFile) {
         formDataToSend.append("image", formData.imageFile);
+      }
+      if (formData.nutritionValueImageFile) {
+        formDataToSend.append(
+          "nutritionValueImage",
+          formData.nutritionValueImageFile
+        );
       } else if (!editingId) {
         // For new items, image file is required
         return alert("Please upload an image");
@@ -190,12 +218,12 @@ export default function CheckOut() {
       formDataToSend.append("subtitle", formData.subtitle);
       formDataToSend.append("options", formData.options);
       formDataToSend.append("tags", JSON.stringify(formData.tags));
-      
+
       // Filter out empty nutrition entries and add nutrition if it exists
       const validNutrition = formData.nutrition
-        ? formData.nutrition.filter(nut => nut.label && nut.value)
+        ? formData.nutrition.filter((nut) => nut.label && nut.value)
         : [];
-      
+
       if (validNutrition.length > 0) {
         formDataToSend.append("nutrition", JSON.stringify(validNutrition));
       } else {
@@ -216,16 +244,18 @@ export default function CheckOut() {
           },
         });
       }
-      
+
       setShowForm(false);
       setImagePreview(null);
       loadItems();
     } catch (err) {
       console.error("Submit error:", err);
-      
+
       // Handle specific error cases
       if (err.response?.status === 413) {
-        alert("File is too large. Maximum size is 5MB. Please compress the image or choose a smaller file.");
+        alert(
+          "File is too large. Maximum size is 5MB. Please compress the image or choose a smaller file."
+        );
       } else if (err.response?.data?.message) {
         alert(err.response.data.message);
       } else if (err.message) {
@@ -303,9 +333,12 @@ export default function CheckOut() {
       {!loading && viewMode === "cards" && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full">
           {items.map((item) => {
-            const hasOptions = item.options && Array.isArray(item.options) && item.options.length > 0;
+            const hasOptions =
+              item.options &&
+              Array.isArray(item.options) &&
+              item.options.length > 0;
             const isOddTotal = hasOptions && item.options.length % 2 === 1;
-            
+
             return (
               <div
                 key={item._id}
@@ -314,15 +347,19 @@ export default function CheckOut() {
                 {/* Image */}
                 <div className="relative h-32 sm:h-36 w-full">
                   <img
-                    src={item.image || "https://via.placeholder.com/400x300?text=No+Image"}
+                    src={
+                      item.image ||
+                      "https://via.placeholder.com/400x300?text=No+Image"
+                    }
                     alt={item.title}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      e.target.src = "https://via.placeholder.com/400x300?text=No+Image";
+                      e.target.src =
+                        "https://via.placeholder.com/400x300?text=No+Image";
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-90" />
-                  
+
                   {/* Admin Actions Overlay - Show on hover */}
                   <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
@@ -344,31 +381,42 @@ export default function CheckOut() {
                 <div className="relative px-3 pb-3 -mt-8 flex flex-col flex-1">
                   <div className="flex-1 overflow-y-auto pr-1 space-y-2">
                     <div className="bg-white rounded-xl p-2 shadow-lg text-center">
-                      <h2 className="text-sm font-extrabold text-gray-800 line-clamp-1">{item.title}</h2>
-                      <p className="text-gray-400 text-[10px] font-medium mt-0.5 line-clamp-1">{item.subtitle}</p>
+                      <h2 className="text-sm font-extrabold text-gray-800 line-clamp-1">
+                        {item.title}
+                      </h2>
+                      <p className="text-gray-400 text-[10px] font-medium mt-0.5 line-clamp-1">
+                        {item.subtitle}
+                      </p>
 
                       {/* Nutrition pills */}
-                      {item.nutrition && Array.isArray(item.nutrition) && item.nutrition.length > 0 && (
-                        <div className="mt-2 flex items-center justify-between bg-gray-50 rounded-lg px-1 py-1.5 border divide-x">
-                          {item.nutrition.map((nut, idx) => (
-                            <div key={idx} className="flex-1 flex flex-col items-center">
-                              <div className="flex items-center gap-0.5">
-                                {nut.highlight && <Icons.Fire />}
-                                <span
-                                  className={`text-[9px] font-bold ${
-                                    nut.highlight ? "text-gray-900" : "text-gray-700"
-                                  }`}
-                                >
-                                  {nut.value}
+                      {item.nutrition &&
+                        Array.isArray(item.nutrition) &&
+                        item.nutrition.length > 0 && (
+                          <div className="mt-2 flex items-center justify-between bg-gray-50 rounded-lg px-1 py-1.5 border divide-x">
+                            {item.nutrition.map((nut, idx) => (
+                              <div
+                                key={idx}
+                                className="flex-1 flex flex-col items-center"
+                              >
+                                <div className="flex items-center gap-0.5">
+                                  {nut.highlight && <Icons.Fire />}
+                                  <span
+                                    className={`text-[9px] font-bold ${
+                                      nut.highlight
+                                        ? "text-gray-900"
+                                        : "text-gray-700"
+                                    }`}
+                                  >
+                                    {nut.value}
+                                  </span>
+                                </div>
+                                <span className="text-[7px] uppercase tracking-wide text-gray-400">
+                                  {nut.label}
                                 </span>
                               </div>
-                              <span className="text-[7px] uppercase tracking-wide text-gray-400">
-                                {nut.label}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                            ))}
+                          </div>
+                        )}
                     </div>
 
                     {/* Options */}
@@ -379,19 +427,25 @@ export default function CheckOut() {
                             <span className="text-[9px] font-bold text-gray-700">
                               Select Base
                             </span>
+                            <span
+                              className="relative inline-flex items-center justify-center w-4 h-4 text-[10px] italic font-semibold  text-gray-700 rounded-full  bg-gray-100 shadow-inner"
+                            >
+                              i
+                            </span>
                           </div>
 
                           <div className="grid grid-cols-2 gap-1 text-[9px]">
                             {item.options.map((opt, idx) => {
-                              const isLastItem = idx === item.options.length - 1;
+                              const isLastItem =
+                                idx === item.options.length - 1;
                               const shouldCenter = isOddTotal && isLastItem;
-                              
+
                               return (
                                 <button
                                   key={idx}
                                   className={`py-1 px-1.5 rounded-lg border font-semibold truncate transition-all ${
-                                    shouldCenter 
-                                      ? "col-span-2 justify-self-center max-w-[calc(50%-0.25rem)] w-[calc(50%-0.25rem)]" 
+                                    shouldCenter
+                                      ? "col-span-2 justify-self-center max-w-[calc(50%-0.25rem)] w-[calc(50%-0.25rem)]"
                                       : "w-full"
                                   } bg-white border-gray-200 text-gray-500 hover:bg-gray-50`}
                                 >
@@ -429,72 +483,79 @@ export default function CheckOut() {
       {/* TABLE VIEW */}
       {!loading && viewMode === "table" && (
         <div className="overflow-x-auto">
-        <table className="w-full border border-gray-300 rounded">
-          <thead>
-            <tr className="bg-gray-100 border-b">
-              <th className="p-3 text-left">Image</th>
-              <th className="p-3 text-left">Title</th>
-              {/* <th className="p-3 text-left">Price</th> */}
-              <th className="p-3 text-left">Options</th>
-              <th className="p-3 text-left">Tags</th>
-              <th className="p-3 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {!loading && items.map((item) => (
-              <tr key={item._id} className="border-b hover:bg-gray-50 transition">
-                <td className="p-3">
-                  {item.image && (
-                    <img
-                      className="w-14 h-14 object-cover rounded"
-                      src={item.image}
-                      alt={item.title || "Item"}
-                      onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/56x56?text=No+Image";
-                      }}
-                    />
-                  )}
-                </td>
-                <td className="p-3 font-medium">{item.title || "Untitled"}</td>
-                {/* <td className="p-3">${item.price}</td> */}
-                <td className="p-3">
-                  {Array.isArray(item.options) 
-                    ? item.options.join(", ") 
-                    : item.options || "—"}
-                </td>
-                <td className="p-3">
-                  {Array.isArray(item.tags) 
-                    ? item.tags.length > 0 
-                      ? item.tags.join(", ") 
-                      : "No tags"
-                    : "—"}
-                </td>
-                <td className="p-3 flex gap-2">
-                  <button
-                    onClick={() => openEditForm(item)}
-                    className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(item._id)}
-                    className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
-                  >
-                    Delete
-                  </button>
-                </td>
+          <table className="w-full border border-gray-300 rounded">
+            <thead>
+              <tr className="bg-gray-100 border-b">
+                <th className="p-3 text-left">Image</th>
+                <th className="p-3 text-left">Title</th>
+                {/* <th className="p-3 text-left">Price</th> */}
+                <th className="p-3 text-left">Options</th>
+                <th className="p-3 text-left">Tags</th>
+                <th className="p-3 text-left">Actions</th>
               </tr>
-            ))}
+            </thead>
+            <tbody>
+              {!loading &&
+                items.map((item) => (
+                  <tr
+                    key={item._id}
+                    className="border-b hover:bg-gray-50 transition"
+                  >
+                    <td className="p-3">
+                      {item.image && (
+                        <img
+                          className="w-14 h-14 object-cover rounded"
+                          src={item.image}
+                          alt={item.title || "Item"}
+                          onError={(e) => {
+                            e.target.src =
+                              "https://via.placeholder.com/56x56?text=No+Image";
+                          }}
+                        />
+                      )}
+                    </td>
+                    <td className="p-3 font-medium">
+                      {item.title || "Untitled"}
+                    </td>
+                    {/* <td className="p-3">${item.price}</td> */}
+                    <td className="p-3">
+                      {Array.isArray(item.options)
+                        ? item.options.join(", ")
+                        : item.options || "—"}
+                    </td>
+                    <td className="p-3">
+                      {Array.isArray(item.tags)
+                        ? item.tags.length > 0
+                          ? item.tags.join(", ")
+                          : "No tags"
+                        : "—"}
+                    </td>
+                    <td className="p-3 flex gap-2">
+                      <button
+                        onClick={() => openEditForm(item)}
+                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(item._id)}
+                        className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
 
-            {!loading && items.length === 0 && !error && (
-              <tr>
-                <td colSpan="5" className="p-4 text-center text-gray-400">
-                  No checkout items yet. Click "Add New Item" to create one.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              {!loading && items.length === 0 && !error && (
+                <tr>
+                  <td colSpan="5" className="p-4 text-center text-gray-400">
+                    No checkout items yet. Click "Add New Item" to create one.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -507,27 +568,41 @@ export default function CheckOut() {
             </h3>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-
               {/* IMAGE UPLOAD */}
               <div>
                 <label className="block font-medium mb-1">
-                  Upload Image {editingId ? "(Leave empty to keep current)" : "*"}
+                  Upload Food Image {editingId ? "(optional)" : "*"}
                 </label>
                 <input
                   type="file"
-                  accept="image/jpeg,image/jpg,image/png"
-                  onChange={handleImageUpload}
-                  className="border p-2 rounded w-full bg-gray-50"
+                  accept="image/jpeg,image/png"
+                  onChange={handleMainImageUpload}
                   required={!editingId}
                 />
-                {(imagePreview || formData.image) && (
-                  <div className="mt-2">
-                    <img
-                      src={imagePreview || formData.image}
-                      alt="preview"
-                      className="w-32 h-32 object-cover rounded border"
-                    />
-                  </div>
+
+                {imagePreview && (
+                  <img
+                    src={imagePreview}
+                    className="w-32 h-32 object-cover mt-2 rounded"
+                  />
+                )}
+              </div>
+
+              <div>
+                <label className="block font-medium mb-1">
+                  Upload Nutrition Label {editingId ? "(optional)" : "*"}
+                </label>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  onChange={handleNutritionImageUpload}
+                />
+
+                {imagePreview2 && (
+                  <img
+                    src={imagePreview2}
+                    className="w-32 h-32 object-cover mt-2 rounded"
+                  />
                 )}
               </div>
 
@@ -556,8 +631,6 @@ export default function CheckOut() {
                   required
                 />
               </div>
-
-            
 
               <div>
                 <label className="block font-medium mb-1">
@@ -610,7 +683,10 @@ export default function CheckOut() {
                           onChange={(e) => {
                             const newNutrition = [...formData.nutrition];
                             newNutrition[index].label = e.target.value;
-                            setFormData({ ...formData, nutrition: newNutrition });
+                            setFormData({
+                              ...formData,
+                              nutrition: newNutrition,
+                            });
                           }}
                         />
                         <input
@@ -621,7 +697,10 @@ export default function CheckOut() {
                           onChange={(e) => {
                             const newNutrition = [...formData.nutrition];
                             newNutrition[index].value = e.target.value;
-                            setFormData({ ...formData, nutrition: newNutrition });
+                            setFormData({
+                              ...formData,
+                              nutrition: newNutrition,
+                            });
                           }}
                         />
                       </div>
@@ -633,7 +712,10 @@ export default function CheckOut() {
                             onChange={(e) => {
                               const newNutrition = [...formData.nutrition];
                               newNutrition[index].highlight = e.target.checked;
-                              setFormData({ ...formData, nutrition: newNutrition });
+                              setFormData({
+                                ...formData,
+                                nutrition: newNutrition,
+                              });
                             }}
                             className="w-4 h-4"
                           />
@@ -645,7 +727,10 @@ export default function CheckOut() {
                             const newNutrition = formData.nutrition.filter(
                               (_, i) => i !== index
                             );
-                            setFormData({ ...formData, nutrition: newNutrition });
+                            setFormData({
+                              ...formData,
+                              nutrition: newNutrition,
+                            });
                           }}
                           className="text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
                         >
@@ -657,7 +742,8 @@ export default function CheckOut() {
 
                   {formData.nutrition.length === 0 && (
                     <p className="text-sm text-gray-400 text-center py-4">
-                      No nutrition facts added. Click "+ Add Nutrition" to add one.
+                      No nutrition facts added. Click "+ Add Nutrition" to add
+                      one.
                     </p>
                   )}
                 </div>
@@ -678,7 +764,11 @@ export default function CheckOut() {
                   disabled={uploading}
                   className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
                 >
-                  {uploading ? "Uploading..." : editingId ? "Save Changes" : "Create"}
+                  {uploading
+                    ? "Uploading..."
+                    : editingId
+                    ? "Save Changes"
+                    : "Create"}
                 </button>
                 <button
                   type="button"

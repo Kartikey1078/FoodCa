@@ -7,10 +7,10 @@ const Sidebar = () => {
     { label: 'Plans', hint: 'Manage', path: '/plans' },
     { label: 'Checkout', hint: 'checkout', path: '/CheckOut' },
     { label: 'Nutrition Tags', hint: 'Nutrition Tags', path: '/nutrition-tags' },
-    { label: 'Nutrition Facts', hint: 'Manage', path: '/nutrition-facts' },
     { label: 'Orders', hint: 'Manage', path: '/orders' },
     { label: 'Customers', hint: 'Insights', path: '/customers' },
     { label: 'Settings', hint: 'System', path: '/settings' },
+    {label: 'Recipes', hint: 'Manage Recipes', path: '/admin-recipes' }
   ];
 
   const quickLinks = ['Reports', 'Inventory', 'Payouts'];
