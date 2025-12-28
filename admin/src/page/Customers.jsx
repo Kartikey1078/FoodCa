@@ -11,7 +11,7 @@ export default function Customers() {
 
   const fetchUsers = async () => {
     const { data } = await axios.get(
-      `${API_URL}/api/users?search=${search}&page=${page}&limit=6`
+      `${API_URL}/users?search=${search}&page=${page}&limit=6`
     );
 
     setUsers(data.users);
