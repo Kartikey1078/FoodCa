@@ -16,6 +16,7 @@ import squareRoutes from "./routes/squareRoutes.js";
 import nutritionFactsRoutes from "./routes/nutritionFactsRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import recipeRoutes from "./routes/recipeRoutes.js";
+import clerkWebhook from "./routes/clerkWebhook.js";
 
 /* =========================
    ENV
@@ -39,12 +40,6 @@ const connectOnce = async () => {
 const app = express();
 
 /* =========================
-   BODY PARSERS
-========================= */
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
-
-/* =========================
    CORS CONFIG
 ========================= */
 app.use(
@@ -55,16 +50,39 @@ app.use(
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "svix-id",
+      "svix-timestamp",
+      "svix-signature",
+    ],
   })
 );
 
-app.options("*", cors());
+/* =========================
+   BODY PARSERS
+========================= */
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 /* =========================
-   DB MIDDLEWARE
+   WEBHOOKS (Raw Body) - BEFORE JSON PARSER
+========================= */
+app.post(
+  "/api/webhooks/clerk",
+  express.raw({ type: "application/json" }),
+  clerkWebhook
+);
+
+/* =========================
+   DB MIDDLEWARE (Skip webhooks)
 ========================= */
 app.use(async (req, res, next) => {
+  if (req.path.startsWith("/api/webhooks")) {
+    return next(); // skip DB for webhooks
+  }
+
   try {
     await connectOnce();
     next();
@@ -100,7 +118,6 @@ app.use("/api/nutrition-facts", nutritionFactsRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/recipes", recipeRoutes);
 
-
 /* =========================
    ERROR HANDLER
 ========================= */
@@ -124,17 +141,3 @@ app.use((err, req, res, next) => {
    EXPORT FOR VERCEL
 ========================= */
 export default app;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
