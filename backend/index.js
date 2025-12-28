@@ -2,9 +2,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import express from "express";
 import multer from "multer";
-
 import connectDB from "./config/db.js";
-
 import itemRoutes from "./routes/itemRoutes.js";
 import SelectPlan from "./routes/select_plan.js";
 import checkoutRoutes from "./routes/checkoutRoutes.js";
@@ -17,7 +15,7 @@ import nutritionFactsRoutes from "./routes/nutritionFactsRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import recipeRoutes from "./routes/recipeRoutes.js";
 import clerkWebhook from "./api/webhooks/clerk.js";
-
+import userRoutes from "./routes/userRoutes.js";
 /* =========================
    ENV
 ========================= */
@@ -118,6 +116,7 @@ app.use("/api/square", squareRoutes);
 app.use("/api/nutrition-facts", nutritionFactsRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/recipes", recipeRoutes);
+app.use("/api/users", userRoutes);
 
 /* =========================
    ERROR HANDLER

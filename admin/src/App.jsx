@@ -8,6 +8,7 @@ import CheckOut from './page/CheckOut';
 import TagAdmin from './page/TagAdmin';
 import Orders from './page/Orders';
 import AdminRecipes from './page/AdminRecipes';
+import Customers from './page/Customers';
 
 const App = () => {
   return (
@@ -24,6 +25,7 @@ const App = () => {
           <Route path="/nutrition-tags" element={<TagAdmin />} />
           <Route path="/orders" element={<Orders />} />
           <Route path='/admin-recipes' element={<AdminRecipes />} />
+          <Route path='/customers' element={<Customers />} />
         </Routes>
 
       </main>
