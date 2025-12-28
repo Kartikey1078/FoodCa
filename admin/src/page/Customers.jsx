@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export default function Customers() {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
@@ -9,8 +11,9 @@ export default function Customers() {
 
   const fetchUsers = async () => {
     const { data } = await axios.get(
-      `/api/users?search=${search}&page=${page}&limit=6`
+      `${API_URL}/api/users?search=${search}&page=${page}&limit=6`
     );
+
     setUsers(data.users);
     setPages(data.pagination.pages);
   };
@@ -21,11 +24,8 @@ export default function Customers() {
 
   return (
     <div className="min-h-screen bg-[#faf7f2] p-8">
-      <h1 className="text-3xl font-semibold mb-6">
-        Customers
-      </h1>
+      <h1 className="text-3xl font-semibold mb-6">Customers</h1>
 
-      {/* Search */}
       <input
         type="text"
         placeholder="Search by name or email..."
@@ -36,7 +36,6 @@ export default function Customers() {
         }}
       />
 
-      {/* Customer Cards */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {users.map((u) => (
           <div
@@ -53,9 +52,7 @@ export default function Customers() {
                 <h2 className="font-medium text-lg">
                   {u.fullName || "No Name"}
                 </h2>
-                <p className="text-sm text-gray-500">
-                  {u.email}
-                </p>
+                <p className="text-sm text-gray-500">{u.email}</p>
               </div>
             </div>
 
@@ -66,7 +63,6 @@ export default function Customers() {
         ))}
       </div>
 
-      {/* Pagination */}
       {pages > 1 && (
         <div className="flex justify-center gap-3 mt-10">
           {[...Array(pages)].map((_, i) => (
