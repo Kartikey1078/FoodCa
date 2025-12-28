@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { CHECKOUT_TOTAL_UPDATED_EVENT } from "../utils/cartStorage";
 const backendURL = import.meta.env.VITE_API_URL;
 
-export default function SquarePayment({ formData, onValidationErrors }) {
+export default function SquarePayment({ formData, onValidationErrors,onPaymentSuccess }) {
   const cardRef = useRef(null);
   const [card, setCard] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -242,7 +242,7 @@ export default function SquarePayment({ formData, onValidationErrors }) {
       const data = await res.json();
 
       if (data.success) {
-        alert("Payment Successful!");
+        // alert("Payment Successful!");
         // Clear localStorage after successful payment
         localStorage.removeItem("checkout_cart");
         localStorage.removeItem("checkout_total");
@@ -250,6 +250,9 @@ export default function SquarePayment({ formData, onValidationErrors }) {
         localStorage.removeItem("foodapp_cart");
         // Optionally clear selectedPlan if needed
         // localStorage.removeItem("selectedPlan");
+        if (onPaymentSuccess) {
+          onPaymentSuccess();
+        }
       } else {
         alert(
           "Payment Failed: " +

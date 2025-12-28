@@ -3,6 +3,8 @@ import { useCart } from "../context/CartContext";
 import AddToCart from "./AddToCart";
 import TagFilters from "./TagFilters";
 import CheckoutSkeletonGrid from "./CheckoutSkeleton";
+import { Info } from "lucide-react";
+
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // --------------------------------------------------
@@ -71,8 +73,17 @@ const CheckoutCard = ({ meal }) => {
   const [added, setAdded] = useState(false);
   const { addToCart, scrollToCart } = useCart();
   const [attemptedAdd, setAttemptedAdd] = useState(false);
+  const [showNutrition, setShowNutrition] = useState(false);
 
-  const { image, title, subtitle, nutrition, options, price } = meal;
+  const {
+    image,
+    title,
+    subtitle,
+    nutrition,
+    options,
+    price,
+    nutritionValueImage,
+  } = meal;
   const hasOptions = Array.isArray(options) && options.length > 0;
   const canAddToCart = quantity > 0 && (!hasOptions || selectedOption);
 
@@ -139,168 +150,184 @@ const CheckoutCard = ({ meal }) => {
   };
 
   return (
-    <div className="relative flex flex-col w-full max-w-[330px] bg-white rounded-3xl shadow-xl overflow-hidden border border-white m-3 sm:max-w-[350px] md:h-[540px] lg:h-[560px]">
-      {/* Image */}
+    <>
+      <div className="relative flex flex-col w-full max-w-[330px] bg-white rounded-3xl shadow-xl overflow-hidden border border-white m-3 sm:max-w-[350px] md:h-[540px] lg:h-[560px]">
+        {/* Image */}
+        <div className="relative h-40 sm:h-48 w-full">
+          <img src={image} alt={title} className="w-full h-full object-cover" />
 
-      <div className="relative h-40 sm:h-48 w-full">
-        <img src={image} alt={title} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-90" />
-      </div>
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
 
-      {/* Content */}
-      <div className="relative px-4 pb-5 -mt-10 flex flex-col flex-1">
-        <div className="flex-1 overflow-y-auto pr-1 space-y-2.5">
-          <div className="bg-white rounded-2xl p-3 shadow-lg text-center">
-            <h2 className="text-xl font-extrabold text-gray-800">{title}</h2>
-            <p className="text-gray-400 text-xs font-medium mt-1">{subtitle}</p>
+          {/* Info Icon */}
+          {nutritionValueImage && (
+            <button
+              onClick={() => setShowNutrition(true)}
+              className="absolute top-3 right-3 w-7 h-7 rounded-full
+                 bg-white/90 backdrop-blur flex items-center justify-center
+                 shadow hover:scale-105 transition"
+            >
+              <Info size={14} className="text-gray-800" />
+            </button>
+          )}
+        </div>
 
-            {/* Nutrition pills */}
-            <div className="mt-3 flex items-center justify-between bg-gray-50 rounded-xl px-1 py-2 border divide-x">
-              {nutrition.map((item, idx) => (
-                <div key={idx} className="flex-1 flex flex-col items-center">
-                  <div className="flex items-center gap-0.5">
-                    {item.highlight && <Icons.Fire />}
-                    <span
-                      className={`text-[11px] font-bold ${
-                        item.highlight ? "text-gray-900" : "text-gray-700"
-                      }`}
-                    >
-                      {item.value}
+        {/* Content */}
+        <div className="relative px-4 pb-5 -mt-10 flex flex-col flex-1">
+          <div className="flex-1 overflow-y-auto pr-1 space-y-2.5">
+            <div className="bg-white rounded-2xl p-3 shadow-lg text-center">
+              <h2 className="text-xl font-extrabold text-gray-800">{title}</h2>
+              <p className="text-gray-400 text-xs font-medium mt-1">
+                {subtitle}
+              </p>
+
+              {/* Nutrition pills */}
+              <div className="mt-3 flex items-center justify-between bg-gray-50 rounded-xl px-1 py-2 border divide-x">
+                {nutrition.map((item, idx) => (
+                  <div key={idx} className="flex-1 flex flex-col items-center">
+                    <div className="flex items-center gap-0.5">
+                      {item.highlight && <Icons.Fire />}
+                      <span
+                        className={`text-[11px] font-bold ${
+                          item.highlight ? "text-gray-900" : "text-gray-700"
+                        }`}
+                      >
+                        {item.value}
+                      </span>
+                    </div>
+                    <span className="text-[8px] uppercase tracking-wide text-gray-400">
+                      {item.label}
                     </span>
                   </div>
-                  <span className="text-[8px] uppercase tracking-wide text-gray-400">
-                    {item.label}
+                ))}
+              </div>
+            </div>
+
+            {/* Options */}
+            <div className="min-h-[80px]">
+              {hasOptions ? (
+                <>
+                  <div className="flex justify-between mb-0.5">
+                    <span className="text-[11px] font-bold text-gray-700">
+                      Select Base
+                    </span>
+                    {selectedOption && (
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 rounded-md">
+                        Saved
+                      </span>
+                    )}
+                  </div>
+
+                  <div
+                    className={`grid grid-cols-2 gap-1.5 text-[11px] ${
+                      shake ? "animate-shake" : ""
+                    }`}
+                  >
+                    {options.map((opt, idx) => {
+                      const active = selectedOption === opt;
+                      const isOddTotal = options.length % 2 === 1;
+                      const isLastItem = idx === options.length - 1;
+                      const shouldCenter = isOddTotal && isLastItem;
+
+                      return (
+                        <button
+                          key={opt}
+                          onClick={() => handleOptionSelect(opt)}
+                          className={`py-1.5 px-2 rounded-xl border font-semibold truncate transition-all ${
+                            shouldCenter
+                              ? "col-span-2 justify-self-center max-w-[calc(50%-0.1875rem)] w-[calc(50%-0.1875rem)]"
+                              : "w-full"
+                          } ${
+                            active
+                              ? "bg-gray-800 border-gray-800 text-white shadow-md"
+                              : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
+                          }`}
+                        >
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center border bg-gradient-to-b from-gray-50 to-white px-3.5 py-3.5 rounded-2xl">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-100 rounded-full text-[11px] font-semibold">
+                    <Icons.Chef /> Chef's preset base
                   </span>
+                  <p className="text-[11px] text-gray-500 font-medium mt-2 text-center">
+                    Base pairing already selected for this dish.
+                  </p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
-          {/* Options */}
-          <div className="min-h-[80px]">
-            {hasOptions ? (
-              <>
-                <div className="flex justify-between mb-0.5">
-                  <span className="text-[11px] font-bold text-gray-700">
-                    Select Base
-                  </span>
-                  {selectedOption && (
-                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 rounded-md">
-                      Saved
-                    </span>
-                  )}
-                </div>
+          {/* Quantity */}
+          <div className="mt-3 flex items-end justify-end gap-3">
+            {/* <span className="text-lg font-bold text-gray-900">${price}</span> */}
 
-                <div
-                  className={`grid grid-cols-2 gap-1.5 text-[11px] ${
-                    shake ? "animate-shake" : ""
-                  }`}
-                >
-                  {options.map((opt, idx) => {
-                    const active = selectedOption === opt;
-                    const isOddTotal = options.length % 2 === 1;
-                    const isLastItem = idx === options.length - 1;
-                    const shouldCenter = isOddTotal && isLastItem;
-
-                    return (
-                      <button
-                        key={opt}
-                        onClick={() => handleOptionSelect(opt)}
-                        className={`py-1.5 px-2 rounded-xl border font-semibold truncate transition-all ${
-                          shouldCenter
-                            ? "col-span-2 justify-self-center max-w-[calc(50%-0.1875rem)] w-[calc(50%-0.1875rem)]"
-                            : "w-full"
-                        } ${
-                          active
-                            ? "bg-gray-800 border-gray-800 text-white shadow-md"
-                            : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
-                        }`}
-                      >
-                        {opt}
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            ) : (
-              <div className="flex flex-col items-center border bg-gradient-to-b from-gray-50 to-white px-3.5 py-3.5 rounded-2xl">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-100 rounded-full text-[11px] font-semibold">
-                  <Icons.Chef /> Chef's preset base
-                </span>
-                <p className="text-[11px] text-gray-500 font-medium mt-2 text-center">
-                  Base pairing already selected for this dish.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Quantity */}
-        <div className="mt-3 flex items-end justify-end gap-3">
-          {/* <span className="text-lg font-bold text-gray-900">${price}</span> */}
-
-          <div className="flex flex-col items-end">
-            <span className="text-xs font-bold text-gray-700 mb-1">
-              Quantity
-            </span>
-            <div className="flex items-center bg-gray-50 rounded-full border border-gray-200 p-1 gap-2">
-              <button
-                onClick={() => setQuantity((q) => Math.max(0, q - 1))}
-                disabled={quantity === 0}
-                className="w-8 h-8 flex items-center justify-center bg-white border rounded-full text-gray-500 disabled:opacity-50"
-              >
-                <Icons.Minus />
-              </button>
-              <span className="w-4 text-center font-bold text-sm">
-                {quantity}
+            <div className="flex flex-col items-end">
+              <span className="text-xs font-bold text-gray-700 mb-1">
+                Quantity
               </span>
-              <button
-                onClick={handleIncrement}
-                className={`w-8 h-8 flex items-center justify-center rounded-full text-white transition
+              <div className="flex items-center bg-gray-50 rounded-full border border-gray-200 p-1 gap-2">
+                <button
+                  onClick={() => setQuantity((q) => Math.max(0, q - 1))}
+                  disabled={quantity === 0}
+                  className="w-8 h-8 flex items-center justify-center bg-white border rounded-full text-gray-500 disabled:opacity-50"
+                >
+                  <Icons.Minus />
+                </button>
+                <span className="w-4 text-center font-bold text-sm">
+                  {quantity}
+                </span>
+                <button
+                  onClick={handleIncrement}
+                  className={`w-8 h-8 flex items-center justify-center rounded-full text-white transition
                   ${
                     selectedOption || !hasOptions
                       ? "bg-gray-900"
                       : "bg-gray-300"
                   }`}
-              >
-                <Icons.Plus />
-              </button>
+                >
+                  <Icons.Plus />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <button
-          onClick={handleAddToCart}
-          disabled={!canAddToCart}
-          className={`mt-4 mb-2 w-full py-3 rounded-2xl font-semibold text-white transition
+          <button
+            onClick={handleAddToCart}
+            disabled={!canAddToCart}
+            className={`mt-4 mb-2 w-full py-3 rounded-2xl font-semibold text-white transition
             ${
               canAddToCart
                 ? "bg-emerald-600 hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-300"
                 : "bg-gray-200 text-gray-500 cursor-not-allowed"
             }`}
-        >
-          {added ? "Added to cart" : "Add to cart"}
-        </button>
-
-        {(quantity > 0 || selectedOption) && (
-          <button
-            type="button"
-            onClick={handleReset}
-            className="text-[12px] font-semibold text-gray-500 hover:text-gray-700 underline-offset-2 underline self-end"
           >
-            Clear selection
+            {added ? "Added to cart" : "Add to cart"}
           </button>
-        )}
 
-        {attemptedAdd && hasOptions && !selectedOption && (
-          <p className="text-[11px] text-rose-500 font-semibold text-right mt-1">
-            Select a base to continue
-          </p>
-        )}
-      </div>
+          {(quantity > 0 || selectedOption) && (
+            <button
+              type="button"
+              onClick={handleReset}
+              className="text-[12px] font-semibold text-gray-500 hover:text-gray-700 underline-offset-2 underline self-end"
+            >
+              Clear selection
+            </button>
+          )}
 
-      {/* Shake animation */}
-      <style>{`
+          {attemptedAdd && hasOptions && !selectedOption && (
+            <p className="text-[11px] text-rose-500 font-semibold text-right mt-1">
+              Select a base to continue
+            </p>
+          )}
+        </div>
+
+        {/* Shake animation */}
+        <style>{`
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
           25% { transform: translateX(-4px); }
@@ -309,8 +336,75 @@ const CheckoutCard = ({ meal }) => {
         .animate-shake {
           animation: shake 0.4s ease-out;
         }
+
+        @keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.2s ease-out;
+}
+
       `}</style>
-    </div>
+      </div>
+
+      {showNutrition && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden animate-scaleIn">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b">
+              <h3 className="text-sm font-bold text-gray-800">
+                Nutrition Information
+              </h3>
+              <button
+                onClick={() => setShowNutrition(false)}
+                className="text-gray-500 hover:text-gray-800 text-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-4 space-y-4">
+              {/* Nutrition Image */}
+              {nutritionValueImage && (
+                <img
+                  src={nutritionValueImage}
+                  alt="Nutrition Facts"
+                  className="w-full rounded-xl border"
+                />
+              )}
+
+              {/* Nutrition Values */}
+              {nutrition?.length > 0 && (
+                <div className="grid grid-cols-2 gap-3">
+                  {nutrition.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-gray-50 rounded-xl p-3 text-center"
+                    >
+                      <p className="text-sm font-bold text-gray-900">
+                        {item.value}
+                      </p>
+                      <p className="text-[10px] uppercase tracking-wide text-gray-400">
+                        {item.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

@@ -10,6 +10,7 @@ import Checkout from "./pages/Checkout";
 import DeliveryForm from "./pages/DeliveryForm";
 import Payments from "./pages/Payments";
 import PaymentSuccess from "./components/PaymentSuccess";
+import RecipePage from "./pages/RecipePage";
 
 const App = () => {
   const centeredWrapper =
@@ -27,6 +28,7 @@ const App = () => {
         <Route path="/delivery-form" element={<DeliveryForm />} />
         <Route path="/payments" element={<Payments />} />
         <Route path="/success" element={<PaymentSuccess />} />
+        <Route path="/RecipePage" element={<RecipePage />} />
 
 
         {/* Centered Clerk SignIn */}

@@ -3,9 +3,10 @@ import axios from "axios";
 import AddToCart from "../components/AddToCart";
 import ReviewOrderHeader from "../components/ReviewOrderHeader";
 import SquarePayment from "../components/SquarePayment";
+import SuccessToast from "../components/SuccessToast";
 
 const DeliveryForm = () => {
-  const [form, setForm] = useState({
+  const initialFormState = {
     userId: "",
     fullName: "",
     addressLine1: "",
@@ -16,9 +17,11 @@ const DeliveryForm = () => {
     couponCode: "",
     deliveryInstruction: "",
     acceptTerms: false,
-  });
-  const [formErrors, setFormErrors] = useState({});
+  };
 
+  const [form, setForm] = useState(initialFormState);
+  const [formErrors, setFormErrors] = useState({});
+  const [showSuccess, setShowSuccess] = useState(false);
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm({ ...form, [name]: type === "checkbox" ? checked : value });
@@ -28,8 +31,26 @@ const DeliveryForm = () => {
     }
   };
 
+  const resetForm = () => {
+    setForm(initialFormState);
+    setFormErrors({});
+  };
+
+  const handlePaymentSuccess = () => {
+    resetForm();
+    setShowSuccess(true);
+  };
+  
+
   return (
     <>
+      {showSuccess && (
+        <SuccessToast
+          message="Your order has been placed successfully 🎉"
+          onClose={() => setShowSuccess(false)}
+        />
+      )}
+
       <ReviewOrderHeader />
       <div className="max-w-6xl mx-auto mt-10 grid grid-cols-1 lg:grid-cols-[1.3fr,0.9fr] gap-6">
         {/* LEFT: DELIVERY FORM */}
@@ -255,6 +276,7 @@ const DeliveryForm = () => {
             <SquarePayment
               formData={form}
               onValidationErrors={(errors) => setFormErrors(errors)}
+              onPaymentSuccess={handlePaymentSuccess}
             />
           </form>
         </div>
