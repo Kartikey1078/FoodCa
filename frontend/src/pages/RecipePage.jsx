@@ -53,7 +53,6 @@ export default function RecipePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-
       {/* ================== SCROLL PROGRESS BAR ================== */}
       <div className="fixed top-0 left-0 z-[60] h-[3px] w-full">
         <div
@@ -65,23 +64,34 @@ export default function RecipePage() {
       {/* ================== HERO ================== */}
       <div
         className={`
-          sticky top-0 z-40 transition-all duration-300 ease-out
-          ${hideHero
-            ? "-translate-y-full opacity-0 blur-md pointer-events-none"
-            : "translate-y-0 opacity-100"}
+          sticky top-0 z-1 transition-all duration-300 ease-out
+          ${
+            hideHero
+              ? "-translate-y-full opacity-0 blur-md pointer-events-none"
+              : "translate-y-0 opacity-100"
+          }
         `}
       >
         <div className="relative bg-[#0c3836] px-6 py-24 text-center text-white shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
-
           {/* Grain */}
           <div className="absolute inset-0 opacity-[0.08] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
 
           {/* Floating Veggies */}
-          <span className="absolute left-10 top-16 animate-float text-4xl">🌿</span>
-          <span className="absolute right-16 top-24 animate-float-delayed text-4xl">🥕</span>
-          <span className="absolute left-1/4 bottom-20 animate-float-slow text-4xl">🍅</span>
-          <span className="absolute right-1/3 bottom-28 animate-float text-4xl">🥦</span>
-          <span className="absolute left-1/2 top-10 animate-float-delayed text-4xl">🍋</span>
+          <span className="absolute left-10 top-16 animate-float text-4xl">
+            🌿
+          </span>
+          <span className="absolute right-16 top-24 animate-float-delayed text-4xl">
+            🥕
+          </span>
+          <span className="absolute left-1/4 bottom-20 animate-float-slow text-4xl">
+            🍅
+          </span>
+          <span className="absolute right-1/3 bottom-28 animate-float text-4xl">
+            🥦
+          </span>
+          <span className="absolute left-1/2 top-10 animate-float-delayed text-4xl">
+            🍋
+          </span>
 
           {/* Gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-[#145b57]/60 via-transparent to-black/40" />
@@ -162,26 +172,14 @@ export default function RecipePage() {
                   <h3 className="font-medium mb-3">Cooking Instructions</h3>
 
                   <ol className="space-y-3 text-sm text-gray-700">
-                    <li className="flex gap-3">
-                      <span className="font-semibold text-[#0c3836]">1.</span>
-                      Heat a pan on medium flame and add a little oil or ghee.
-                    </li>
-                    <li className="flex gap-3">
-                      <span className="font-semibold text-[#0c3836]">2.</span>
-                      Add the prepared ingredients and sauté gently for 2–3 minutes.
-                    </li>
-                    <li className="flex gap-3">
-                      <span className="font-semibold text-[#0c3836]">3.</span>
-                      Add spices or seasoning as per taste and stir well.
-                    </li>
-                    <li className="flex gap-3">
-                      <span className="font-semibold text-[#0c3836]">4.</span>
-                      Cover and cook on low flame until everything is tender.
-                    </li>
-                    <li className="flex gap-3">
-                      <span className="font-semibold text-[#0c3836]">5.</span>
-                      Finish with fresh herbs and serve warm.
-                    </li>
+                    {recipe.instructions?.map((step, idx) => (
+                      <li key={idx} className="flex gap-3">
+                        <span className="font-semibold text-[#0c3836]">
+                          {idx + 1}.
+                        </span>
+                        {step}
+                      </li>
+                    ))}
                   </ol>
                 </div>
 

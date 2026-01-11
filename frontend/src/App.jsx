@@ -11,10 +11,11 @@ import DeliveryForm from "./pages/DeliveryForm";
 import Payments from "./pages/Payments";
 import PaymentSuccess from "./components/PaymentSuccess";
 import RecipePage from "./pages/RecipePage";
+import BlogDetailPage from "./pages/BlogDetailPage"
 
 const App = () => {
   const centeredWrapper =
-    "relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-[#020617] via-[#0f172a] to-[#1e293b]";
+    "relative flex min-h-screen items-center justify-center overflow-hidden";
 
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
@@ -24,12 +25,12 @@ const App = () => {
         <Route path="/plans" element={<PlansPage />} />
         <Route path="/recipes" element={<RecipesPage />} />
         <Route path="/blogs" element={<BlogsPage />} />
+        <Route path="/blogs/:id" element={<BlogDetailPage />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/delivery-form" element={<DeliveryForm />} />
         <Route path="/payments" element={<Payments />} />
         <Route path="/success" element={<PaymentSuccess />} />
         <Route path="/RecipePage" element={<RecipePage />} />
-
 
         {/* Centered Clerk SignIn */}
         <Route
@@ -42,8 +43,13 @@ const App = () => {
               <div className="pointer-events-none absolute top-1/2 left-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/5 blur-3xl" />
 
               {/* Glassmorphism card for Clerk SignIn */}
-              <div className="relative z-10 w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur-2xl">
-                <SignIn routing="path" path="/sign-in" />
+              <div className="relative z-10 w-full max-w-md">
+                <SignIn
+                 routing="path"
+                 path="/sign-in"
+                 afterSignInUrl="/checkout"
+                 afterSignUpUrl="/checkout"
+                />
               </div>
             </div>
           }

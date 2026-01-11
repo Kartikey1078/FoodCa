@@ -22,7 +22,7 @@ const CheckoutSkeleton = () => {
             <div className="mt-3 flex items-center justify-between bg-gray-50 rounded-xl px-1 py-2 border divide-x">
               {[1, 2, 3].map((idx) => (
                 <div key={idx} className="flex-1 flex flex-col items-center">
-                  <div className="h-4 bg-gray-300 rounded w-8 mb-1"></div>
+                  <div className="h-4 bg-gray-300 rounded w-8 mb-1">Pro</div>
                   <div className="h-2 bg-gray-200 rounded w-12"></div>
                 </div>
               ))}

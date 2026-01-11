@@ -12,7 +12,6 @@ const AddToCart = () => {
     const n = Number(value);
     return Number.isFinite(n) ? n : 0;
   };
-  
 
   const [minMealError, setMinMealError] = useState("");
   const [isMinMealModalOpen, setIsMinMealModalOpen] = useState(false);
@@ -39,18 +38,17 @@ const AddToCart = () => {
         extraMealPrice: 0,
         minMeals: 0,
       };
-    
 
     return {
       title:
         plan.attributes?.plan_title || plan.title || "Plan Title Not Found",
-        price: safeNumber(plan.attributes?.price ?? plan.price),
-        extraMealPrice: safeNumber(
-          plan.attributes?.extra_meal_price ?? plan.extraMealPrice
-        ),
-        minMeals: safeNumber(
-          plan.attributes?.minimum_meal_count ?? plan.numberOfMeals
-        ),
+      price: safeNumber(plan.attributes?.price ?? plan.price),
+      extraMealPrice: safeNumber(
+        plan.attributes?.extra_meal_price ?? plan.extraMealPrice
+      ),
+      minMeals: safeNumber(
+        plan.attributes?.minimum_meal_count ?? plan.numberOfMeals
+      ),
     };
   };
 
@@ -61,7 +59,6 @@ const AddToCart = () => {
     (sum, item) => sum + safeNumber(item.quantity),
     0
   );
-  
 
   // ---- EFFECTIVE EXTRA MEAL PRICE ----
   const effectiveExtraMealPrice =
@@ -71,7 +68,7 @@ const AddToCart = () => {
   const extraMeals =
     totalMeals > planInfo.minMeals ? totalMeals - planInfo.minMeals : 0;
 
-    const extraMealCost = safeNumber(extraMeals * effectiveExtraMealPrice);
+  const extraMealCost = safeNumber(extraMeals * effectiveExtraMealPrice);
 
   // ---- CHECK MINIMUM MEALS CONDITION ----
   const meetsMinimumMeals =
@@ -97,16 +94,20 @@ const AddToCart = () => {
         localStorage.setItem("checkout_cart", itemsString);
         localStorage.setItem("checkout_total", String(grandTotal));
         // Dispatch custom event to notify other components (e.g., SquarePayment)
-        window.dispatchEvent(new CustomEvent(CHECKOUT_TOTAL_UPDATED_EVENT, {
-          detail: { total: grandTotal }
-        }));
+        window.dispatchEvent(
+          new CustomEvent(CHECKOUT_TOTAL_UPDATED_EVENT, {
+            detail: { total: grandTotal },
+          })
+        );
       } else {
         localStorage.removeItem("checkout_cart");
         localStorage.removeItem("checkout_total");
         // Dispatch event with 0 total when cart is cleared
-        window.dispatchEvent(new CustomEvent(CHECKOUT_TOTAL_UPDATED_EVENT, {
-          detail: { total: 0 }
-        }));
+        window.dispatchEvent(
+          new CustomEvent(CHECKOUT_TOTAL_UPDATED_EVENT, {
+            detail: { total: 0 },
+          })
+        );
       }
 
       // Update refs
@@ -115,7 +116,6 @@ const AddToCart = () => {
       prevSelectedPlanRef.current = selectedPlan;
     }
   }, [items, grandTotal, selectedPlan]);
-  
 
   // ---- HANDLE PROCEED ----
   const handleProceedToCheckout = () => {
@@ -318,7 +318,9 @@ const AddToCart = () => {
 
                     <div className="flex items-center border border-gray-200 rounded-md overflow-hidden">
                       <button
-                        onClick={() => updateQuantity(item.key, item.quantity - 1)}
+                        onClick={() =>
+                          updateQuantity(item.key, item.quantity - 1)
+                        }
                         className="px-1.5 sm:px-2 py-1 text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors text-xs sm:text-sm touch-manipulation"
                         aria-label="Decrease quantity"
                       >
@@ -328,7 +330,9 @@ const AddToCart = () => {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => updateQuantity(item.key, item.quantity + 1)}
+                        onClick={() =>
+                          updateQuantity(item.key, item.quantity + 1)
+                        }
                         className="px-1.5 sm:px-2 py-1 text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors text-xs sm:text-sm touch-manipulation"
                         aria-label="Increase quantity"
                       >
@@ -338,14 +342,14 @@ const AddToCart = () => {
                   </div>
                 </div>
 
-                {/* SplitMeal */}
-                <div className="col-span-2 mt-1.5 sm:mt-2 border border-gray-200 rounded-md px-2 sm:px-3 py-1.5 sm:py-2 bg-white w-full max-w-full overflow-hidden">
-                  <SplitMeal itemKey={item.key} />
-                </div>
+                {!item.noSplit && (
+                  <div className="col-span-2 mt-1.5 sm:mt-2 border border-gray-200 rounded-md px-2 sm:px-3 py-1.5 sm:py-2 bg-white w-full max-w-full overflow-hidden">
+                    <SplitMeal itemKey={item.key} />
+                  </div>
+                )}
               </div>
             ))}
           </div>
-
 
           {/* -------------------- TOTAL SECTION -------------------- */}
           <div className="border-t border-dashed pt-4 mt-4 text-sm">
@@ -373,19 +377,18 @@ const AddToCart = () => {
               </p>
             )}
 
-{location.pathname !== "/delivery-form" && (
-  <button
-    onClick={handleProceedToCheckout}
-    className={`mt-4 w-full py-3 rounded-2xl font-semibold transition ${
-      selectedPlan && !meetsMinimumMeals
-        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-        : "bg-gray-900 text-white hover:bg-gray-800"
-    }`}
-  >
-    Proceed to checkout
-  </button>
-)}
-
+            {location.pathname !== "/delivery-form" && (
+              <button
+                onClick={handleProceedToCheckout}
+                className={`mt-4 w-full py-3 rounded-2xl font-semibold transition ${
+                  selectedPlan && !meetsMinimumMeals
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-gray-900 text-white hover:bg-gray-800"
+                }`}
+              >
+                Proceed to checkout
+              </button>
+            )}
           </div>
         </>
       )}

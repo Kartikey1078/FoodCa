@@ -83,6 +83,7 @@ const CheckoutCard = ({ meal }) => {
     options,
     price,
     nutritionValueImage,
+    noSplit
   } = meal;
   const hasOptions = Array.isArray(options) && options.length > 0;
   const canAddToCart = quantity > 0 && (!hasOptions || selectedOption);
@@ -102,9 +103,7 @@ const CheckoutCard = ({ meal }) => {
     if (!hasOptions || selectedOption) {
       setQuantity((q) => q + 1);
     } else {
-      // User tried to add without selecting option
       setAttemptedAdd(true);
-
       setShake(true);
       setTimeout(() => setShake(false), 400);
     }
@@ -142,7 +141,10 @@ const CheckoutCard = ({ meal }) => {
       quantity,
       price,
       image,
+      noSplit: meal.noSplit,
     });
+    console.log(item.title, item.noSplit);
+
 
     setAdded(true);
     setQuantity(0);
@@ -356,8 +358,8 @@ const CheckoutCard = ({ meal }) => {
       </div>
 
       {showNutrition && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden animate-scaleIn">
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white w-full max-w-[90%] sm:max-w-lg max-h-[90vh] rounded-2xl shadow-xl overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <h3 className="text-sm font-bold text-gray-800">
@@ -372,13 +374,13 @@ const CheckoutCard = ({ meal }) => {
             </div>
 
             {/* Body */}
-            <div className="p-4 space-y-4">
+            <div className="p-3 sm:p-4 space-y-4 overflow-y-auto">
               {/* Nutrition Image */}
               {nutritionValueImage && (
                 <img
                   src={nutritionValueImage}
                   alt="Nutrition Facts"
-                  className="w-full rounded-xl border"
+                  className="w-full aspect-[4/2] object-contain rounded-xl border max-h-[40vh] sm:max-h-none"
                 />
               )}
 
@@ -415,21 +417,22 @@ const MenuPage = () => {
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTag, setSelectedTag] = useState("All");
+  const [activeWeek, setActiveWeek] = useState(1);
 
   useEffect(() => {
     const fetchMeals = async () => {
       try {
         setLoading(true);
+  
         const url =
           selectedTag === "All"
-            ? `${API_BASE_URL}/checkout`
+            ? `${API_BASE_URL}/checkout/week?week=${activeWeek}`
             : `${API_BASE_URL}/checkout/tags?tag=${encodeURIComponent(
-                selectedTag
-              )}`;
-
+              selectedTag
+            )}&week=${activeWeek}`;  
         const res = await fetch(url);
         const data = await res.json();
-
+  
         if (data.success) {
           setMeals(data.data);
         }
@@ -439,9 +442,19 @@ const MenuPage = () => {
         setLoading(false);
       }
     };
-
+  
     fetchMeals();
-  }, [selectedTag]);
+  }, [selectedTag, activeWeek]);
+  
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveWeek((prev) => (prev === 6 ? 1 : prev + 1));
+    }, 30000); 
+  
+    return () => clearInterval(interval);
+  }, []);
+  
 
   const handleTagSelect = (tag) => {
     setSelectedTag(tag);
