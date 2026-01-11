@@ -1,49 +1,27 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import TagAdmin from "./TagAdmin"; // Adjust path to your TagAdmin component
-
-// Icons component matching CheckoutCard
-const Icons = {
-  Fire: () => (
-    <svg
-      className="w-3 h-3 text-orange-500"
-      fill="currentColor"
-      viewBox="0 0 20 20"
-    >
-      <path
-        fillRule="evenodd"
-        d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z"
-        clipRule="evenodd"
-      />
-    </svg>
-  ),
-  Chef: () => (
-    <svg
-      className="w-4 h-4 text-gray-500"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={1.8}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M5 11a4 4 0 113.5-6 4 4 0 017 0A4 4 0 1122 11v2a2 2 0 01-2 2h-1.5l-.5 4a2 2 0 01-2 2H8a2 2 0 01-2-2l-.5-4H4a2 2 0 01-2-2v-2z"
-      />
-    </svg>
-  ),
-};
+import CheckoutCard from "../components/CheckoutCard";
+import CheckoutFormModal from "../components/CheckoutFormModal";
+import CheckoutTable from "../components/CheckoutTable";
+import { Grid, Table, Plus, Filter } from "lucide-react";
 
 const API_URL = `${import.meta.env.VITE_API_URL}/checkout`;
 
 export default function CheckOut() {
+  const DEFAULT_NUTRITION = [
+    { label: "Calories", value: "" },
+    { label: "Protein", value: "" },
+    { label: "Fat", value: "" },
+    { label: "Carbs", value: "" },
+  ];
+
   const [items, setItems] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [selectedTag, setSelectedTag] = useState("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [viewMode, setViewMode] = useState("cards"); // "cards" or "table"
+  const [viewMode, setViewMode] = useState("cards");
+  const [selectedWeek, setSelectedWeek] = useState("all");
 
   const [formData, setFormData] = useState({
     image: "",
@@ -53,10 +31,13 @@ export default function CheckOut() {
     price: "",
     options: "",
     tags: [], // Added tags array
-    nutrition: [], // Nutrition facts array
+    nutrition: DEFAULT_NUTRITION, // Nutrition facts array
     nutritionValueImage: "",
     nutritionValueImageFile: null,
+    weekNumber: "",
+    noSplit: false, // ✅ Added here
   });
+
   const [imagePreview, setImagePreview] = useState(null);
   const [imagePreview2, setImagePreview2] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -118,7 +99,6 @@ export default function CheckOut() {
       setLoading(true);
       setError(null);
       const res = await axios.get(API_URL);
-      console.log("API Response:", res.data); // Debug log
 
       if (res.data.success && Array.isArray(res.data.data)) {
         setItems(res.data.data);
@@ -144,7 +124,7 @@ export default function CheckOut() {
     loadItems();
   }, []);
 
-  // Open create form
+  // Open create form - FIXED: Added noSplit
   const openCreateForm = () => {
     setEditingId(null);
     setFormData({
@@ -155,37 +135,66 @@ export default function CheckOut() {
       price: "",
       options: "",
       tags: [],
-      nutrition: [],
+      nutrition: DEFAULT_NUTRITION,
+      nutritionValueImage: "",
+      nutritionValueImageFile: null,
+      weekNumber: "",
+      noSplit: false, // ✅ Added here
     });
     setImagePreview(null);
+    setImagePreview2(null);
     setShowForm(true);
   };
 
   // Open edit form
   const openEditForm = (item) => {
+    console.log("Editing item:", item); // Debug log
+    
     setEditingId(item._id);
+    const nutritionApi = DEFAULT_NUTRITION.map((def) => {
+      const found = item.nutrition?.find((n) => n.label === def.label);
+      return {
+        label: def.label,
+        value: found?.value || "",
+      };
+    });
+    
     setFormData({
       image: item.image,
       imageFile: null,
+      nutritionValueImage: item.nutritionValueImage || "",
+      nutritionValueImageFile: null,
       title: item.title,
       subtitle: item.subtitle,
       price: item.price || "",
-      options: item.options.join(", "),
+      options: Array.isArray(item.options) ? item.options.join(", ") : item.options || "",
       tags: item.tags || [],
-      nutrition: item.nutrition || [],
+      nutrition: nutritionApi,
+      weekNumber: Array.isArray(item.weekNumbers)
+        ? item.weekNumbers[0]
+        : item.weekNumbers || "",
+      noSplit: item.noSplit ?? false, // ✅ Using nullish coalescing for safety
     });
+    
+    console.log("Form data set:", {
+      noSplit: item.noSplit,
+      converted: item.noSplit ?? false
+    }); // Debug log
+    
     setImagePreview(item.image);
+    setImagePreview2(item.nutritionValueImage || null);
     setShowForm(true);
   };
 
   // Delete item
   const handleDelete = async (id) => {
-    if (window.confirm("Delete this item?")) {
+    if (window.confirm("Are you sure you want to delete this meal?")) {
       try {
         await axios.delete(`${API_URL}/${id}`);
         loadItems();
       } catch (err) {
         console.error(err);
+        alert("Failed to delete item");
       }
     }
   };
@@ -193,6 +202,8 @@ export default function CheckOut() {
   // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Form submitted with data:", formData); // Debug log
+    
     setUploading(true);
 
     try {
@@ -202,6 +213,12 @@ export default function CheckOut() {
       if (formData.imageFile) {
         formDataToSend.append("image", formData.imageFile);
       }
+      
+      if (!formData.weekNumber) {
+        alert("Please select at least one week");
+        return;
+      }
+      
       if (formData.nutritionValueImageFile) {
         formDataToSend.append(
           "nutritionValueImage",
@@ -211,13 +228,26 @@ export default function CheckOut() {
         // For new items, image file is required
         return alert("Please upload an image");
       }
-      // For updates without new image, don't send image field (will keep existing)
 
       // Add other fields
       formDataToSend.append("title", formData.title);
       formDataToSend.append("subtitle", formData.subtitle);
-      formDataToSend.append("options", formData.options);
       formDataToSend.append("tags", JSON.stringify(formData.tags));
+      formDataToSend.append("noSplit", formData.noSplit.toString()); // ✅ Ensure boolean is stringified
+      
+      console.log("Sending noSplit value:", formData.noSplit); // Debug log
+      
+      formDataToSend.append(
+        "weekNumbers",
+        JSON.stringify([formData.weekNumber])
+      );
+      
+      const optionsArray = formData.options
+        .split(",")
+        .map((opt) => opt.trim())
+        .filter(Boolean);
+
+      formDataToSend.append("options", optionsArray);
 
       // Filter out empty nutrition entries and add nutrition if it exists
       const validNutrition = formData.nutrition
@@ -227,17 +257,18 @@ export default function CheckOut() {
       if (validNutrition.length > 0) {
         formDataToSend.append("nutrition", JSON.stringify(validNutrition));
       } else {
-        // Send empty array if no valid nutrition
         formDataToSend.append("nutrition", JSON.stringify([]));
       }
 
       if (editingId) {
+        console.log("Updating item:", editingId, formDataToSend);
         await axios.put(`${API_URL}/${editingId}`, formDataToSend, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
       } else {
+        console.log("Creating new item:", formDataToSend);
         await axios.post(API_URL, formDataToSend, {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -247,11 +278,11 @@ export default function CheckOut() {
 
       setShowForm(false);
       setImagePreview(null);
+      setImagePreview2(null);
       loadItems();
     } catch (err) {
-      console.error("Submit error:", err);
+      console.error("Submit error:", err.response?.data || err);
 
-      // Handle specific error cases
       if (err.response?.status === 413) {
         alert(
           "File is too large. Maximum size is 5MB. Please compress the image or choose a smaller file."
@@ -268,524 +299,224 @@ export default function CheckOut() {
     }
   };
 
+  const filteredItems =
+    selectedWeek === "all"
+      ? items
+      : items.filter((item) =>
+          Array.isArray(item.weekNumbers)
+            ? item.weekNumbers.includes(Number(selectedWeek))
+            : item.weekNumbers === Number(selectedWeek)
+        );
+
   return (
-    <div className="p-6">
-      <h2 className="text-3xl font-bold mb-4">Checkout Admin Panel</h2>
-
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          <strong>Error:</strong> {error}
-          <div className="mt-2 text-sm">
-            <p>API URL: {API_URL}</p>
-            <p>Items loaded: {items.length}</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+              Meal Management
+            </h1>
+            <p className="text-gray-600">
+              Manage your menu items, nutrition facts, and weekly planning
+            </p>
           </div>
+          
           <button
-            onClick={loadItems}
-            className="mt-2 bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+            onClick={openCreateForm}
+            className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white px-6 py-3 rounded-xl font-medium hover:from-emerald-700 hover:to-teal-600 transition-all duration-200 shadow-md hover:shadow-lg"
           >
-            Retry
+            <Plus className="w-5 h-5" />
+            Add New Meal
           </button>
         </div>
-      )}
 
-      <div className="flex justify-between items-center mb-4">
-        <button
-          onClick={openCreateForm}
-          className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700"
-        >
-          + Add New Item
-        </button>
-
-        {/* View Toggle */}
-        <div className="flex gap-2 bg-gray-100 rounded-lg p-1">
-          <button
-            onClick={() => setViewMode("cards")}
-            className={`px-4 py-2 rounded transition ${
-              viewMode === "cards"
-                ? "bg-white shadow text-blue-600"
-                : "text-gray-600 hover:text-gray-800"
-            }`}
-          >
-            Cards
-          </button>
-          <button
-            onClick={() => setViewMode("table")}
-            className={`px-4 py-2 rounded transition ${
-              viewMode === "table"
-                ? "bg-white shadow text-blue-600"
-                : "text-gray-600 hover:text-gray-800"
-            }`}
-          >
-            Table
-          </button>
-        </div>
-      </div>
-
-      {/* Loading State */}
-      {loading && (
-        <div className="text-center py-8">
-          <p className="text-gray-500">Loading checkout items...</p>
-        </div>
-      )}
-
-      {/* CARD VIEW - Matching CheckoutCard.jsx design */}
-      {!loading && viewMode === "cards" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full">
-          {items.map((item) => {
-            const hasOptions =
-              item.options &&
-              Array.isArray(item.options) &&
-              item.options.length > 0;
-            const isOddTotal = hasOptions && item.options.length % 2 === 1;
-
-            return (
-              <div
-                key={item._id}
-                className="relative flex flex-col w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-white group"
-              >
-                {/* Image */}
-                <div className="relative h-32 sm:h-36 w-full">
-                  <img
-                    src={
-                      item.image ||
-                      "https://via.placeholder.com/400x300?text=No+Image"
-                    }
-                    alt={item.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.src =
-                        "https://via.placeholder.com/400x300?text=No+Image";
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-90" />
-
-                  {/* Admin Actions Overlay - Show on hover */}
-                  <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => openEditForm(item)}
-                      className="bg-green-600 text-white px-2 py-1 rounded text-[10px] font-semibold hover:bg-green-700 shadow-lg"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(item._id)}
-                      className="bg-red-600 text-white px-2 py-1 rounded text-[10px] font-semibold hover:bg-red-700 shadow-lg"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="relative px-3 pb-3 -mt-8 flex flex-col flex-1">
-                  <div className="flex-1 overflow-y-auto pr-1 space-y-2">
-                    <div className="bg-white rounded-xl p-2 shadow-lg text-center">
-                      <h2 className="text-sm font-extrabold text-gray-800 line-clamp-1">
-                        {item.title}
-                      </h2>
-                      <p className="text-gray-400 text-[10px] font-medium mt-0.5 line-clamp-1">
-                        {item.subtitle}
-                      </p>
-
-                      {/* Nutrition pills */}
-                      {item.nutrition &&
-                        Array.isArray(item.nutrition) &&
-                        item.nutrition.length > 0 && (
-                          <div className="mt-2 flex items-center justify-between bg-gray-50 rounded-lg px-1 py-1.5 border divide-x">
-                            {item.nutrition.map((nut, idx) => (
-                              <div
-                                key={idx}
-                                className="flex-1 flex flex-col items-center"
-                              >
-                                <div className="flex items-center gap-0.5">
-                                  {nut.highlight && <Icons.Fire />}
-                                  <span
-                                    className={`text-[9px] font-bold ${
-                                      nut.highlight
-                                        ? "text-gray-900"
-                                        : "text-gray-700"
-                                    }`}
-                                  >
-                                    {nut.value}
-                                  </span>
-                                </div>
-                                <span className="text-[7px] uppercase tracking-wide text-gray-400">
-                                  {nut.label}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                    </div>
-
-                    {/* Options */}
-                    <div className="min-h-[60px]">
-                      {hasOptions ? (
-                        <>
-                          <div className="flex justify-between mb-0.5">
-                            <span className="text-[9px] font-bold text-gray-700">
-                              Select Base
-                            </span>
-                            <span
-                              className="relative inline-flex items-center justify-center w-4 h-4 text-[10px] italic font-semibold  text-gray-700 rounded-full  bg-gray-100 shadow-inner"
-                            >
-                              i
-                            </span>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-1 text-[9px]">
-                            {item.options.map((opt, idx) => {
-                              const isLastItem =
-                                idx === item.options.length - 1;
-                              const shouldCenter = isOddTotal && isLastItem;
-
-                              return (
-                                <button
-                                  key={idx}
-                                  className={`py-1 px-1.5 rounded-lg border font-semibold truncate transition-all ${
-                                    shouldCenter
-                                      ? "col-span-2 justify-self-center max-w-[calc(50%-0.25rem)] w-[calc(50%-0.25rem)]"
-                                      : "w-full"
-                                  } bg-white border-gray-200 text-gray-500 hover:bg-gray-50`}
-                                >
-                                  {opt}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="flex flex-col items-center border bg-gradient-to-b from-gray-50 to-white px-2 py-2 rounded-xl">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-100 rounded-full text-[9px] font-semibold">
-                            <Icons.Chef /> Chef's preset
-                          </span>
-                          <p className="text-[9px] text-gray-500 font-medium mt-1 text-center">
-                            Base pairing selected.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+        {/* Error Message - Premium Design */}
+        {error && (
+          <div className="mb-6 bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-2xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-red-100 rounded-xl">
+                <span className="text-red-600 font-bold">!</span>
               </div>
-            );
-          })}
-
-          {items.length === 0 && (
-            <div className="col-span-full text-center py-12 text-gray-400">
-              No checkout items yet. Click "Add New Item" to create one.
+              <div className="flex-1">
+                <h3 className="font-bold text-red-800 mb-2">Error Loading Data</h3>
+                <p className="text-red-700 mb-3">{error}</p>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <p>API Endpoint: {API_URL}</p>
+                  <p>Items loaded: {items.length}</p>
+                </div>
+                <button
+                  onClick={loadItems}
+                  className="mt-4 bg-gradient-to-r from-red-600 to-orange-600 text-white px-4 py-2 rounded-lg hover:from-red-700 hover:to-orange-700 transition-all duration-200"
+                >
+                  Retry Loading
+                </button>
+              </div>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
 
-      {/* TABLE VIEW */}
-      {!loading && viewMode === "table" && (
-        <div className="overflow-x-auto">
-          <table className="w-full border border-gray-300 rounded">
-            <thead>
-              <tr className="bg-gray-100 border-b">
-                <th className="p-3 text-left">Image</th>
-                <th className="p-3 text-left">Title</th>
-                {/* <th className="p-3 text-left">Price</th> */}
-                <th className="p-3 text-left">Options</th>
-                <th className="p-3 text-left">Tags</th>
-                <th className="p-3 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {!loading &&
-                items.map((item) => (
-                  <tr
-                    key={item._id}
-                    className="border-b hover:bg-gray-50 transition"
-                  >
-                    <td className="p-3">
-                      {item.image && (
-                        <img
-                          className="w-14 h-14 object-cover rounded"
-                          src={item.image}
-                          alt={item.title || "Item"}
-                          onError={(e) => {
-                            e.target.src =
-                              "https://via.placeholder.com/56x56?text=No+Image";
-                          }}
-                        />
-                      )}
-                    </td>
-                    <td className="p-3 font-medium">
-                      {item.title || "Untitled"}
-                    </td>
-                    {/* <td className="p-3">${item.price}</td> */}
-                    <td className="p-3">
-                      {Array.isArray(item.options)
-                        ? item.options.join(", ")
-                        : item.options || "—"}
-                    </td>
-                    <td className="p-3">
-                      {Array.isArray(item.tags)
-                        ? item.tags.length > 0
-                          ? item.tags.join(", ")
-                          : "No tags"
-                        : "—"}
-                    </td>
-                    <td className="p-3 flex gap-2">
-                      <button
-                        onClick={() => openEditForm(item)}
-                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item._id)}
-                        className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-
-              {!loading && items.length === 0 && !error && (
-                <tr>
-                  <td colSpan="5" className="p-4 text-center text-gray-400">
-                    No checkout items yet. Click "Add New Item" to create one.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* FORM MODAL */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg overflow-y-auto max-h-[90vh]">
-            <h3 className="text-xl font-semibold mb-4">
-              {editingId ? "Edit Item" : "Create Item"}
-            </h3>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* IMAGE UPLOAD */}
-              <div>
-                <label className="block font-medium mb-1">
-                  Upload Food Image {editingId ? "(optional)" : "*"}
-                </label>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png"
-                  onChange={handleMainImageUpload}
-                  required={!editingId}
-                />
-
-                {imagePreview && (
-                  <img
-                    src={imagePreview}
-                    className="w-32 h-32 object-cover mt-2 rounded"
-                  />
-                )}
-              </div>
-
-              <div>
-                <label className="block font-medium mb-1">
-                  Upload Nutrition Label {editingId ? "(optional)" : "*"}
-                </label>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png"
-                  onChange={handleNutritionImageUpload}
-                />
-
-                {imagePreview2 && (
-                  <img
-                    src={imagePreview2}
-                    className="w-32 h-32 object-cover mt-2 rounded"
-                  />
-                )}
-              </div>
-
-              <div>
-                <label className="block font-medium mb-1">Title</label>
-                <input
-                  type="text"
-                  className="border p-2 rounded w-full"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block font-medium mb-1">Subtitle</label>
-                <input
-                  type="text"
-                  className="border p-2 rounded w-full"
-                  value={formData.subtitle}
-                  onChange={(e) =>
-                    setFormData({ ...formData, subtitle: e.target.value })
-                  }
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block font-medium mb-1">
-                  Options (comma separated)
-                </label>
-                <input
-                  type="text"
-                  className="border p-2 rounded w-full"
-                  value={formData.options}
-                  onChange={(e) =>
-                    setFormData({ ...formData, options: e.target.value })
-                  }
-                  required
-                />
-              </div>
-
-              {/* NUTRITION FACTS */}
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block font-medium">Nutrition Facts</label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFormData({
-                        ...formData,
-                        nutrition: [
-                          ...formData.nutrition,
-                          { label: "", value: "", highlight: false },
-                        ],
-                      });
-                    }}
-                    className="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                  >
-                    + Add Nutrition
-                  </button>
-                </div>
-
-                <div className="space-y-2 max-h-48 overflow-y-auto border rounded p-2">
-                  {formData.nutrition.map((nut, index) => (
-                    <div
-                      key={index}
-                      className="flex gap-2 items-start p-2 bg-gray-50 rounded border"
-                    >
-                      <div className="flex-1 space-y-2">
-                        <input
-                          type="text"
-                          placeholder="Label (e.g., Calories)"
-                          className="border p-2 rounded w-full text-sm"
-                          value={nut.label}
-                          onChange={(e) => {
-                            const newNutrition = [...formData.nutrition];
-                            newNutrition[index].label = e.target.value;
-                            setFormData({
-                              ...formData,
-                              nutrition: newNutrition,
-                            });
-                          }}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Value (e.g., 350 kcal)"
-                          className="border p-2 rounded w-full text-sm"
-                          value={nut.value}
-                          onChange={(e) => {
-                            const newNutrition = [...formData.nutrition];
-                            newNutrition[index].value = e.target.value;
-                            setFormData({
-                              ...formData,
-                              nutrition: newNutrition,
-                            });
-                          }}
-                        />
-                      </div>
-                      <div className="flex flex-col gap-2">
-                        <label className="flex items-center gap-1 text-xs">
-                          <input
-                            type="checkbox"
-                            checked={nut.highlight || false}
-                            onChange={(e) => {
-                              const newNutrition = [...formData.nutrition];
-                              newNutrition[index].highlight = e.target.checked;
-                              setFormData({
-                                ...formData,
-                                nutrition: newNutrition,
-                              });
-                            }}
-                            className="w-4 h-4"
-                          />
-                          <span>Highlight</span>
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newNutrition = formData.nutrition.filter(
-                              (_, i) => i !== index
-                            );
-                            setFormData({
-                              ...formData,
-                              nutrition: newNutrition,
-                            });
-                          }}
-                          className="text-xs bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-
-                  {formData.nutrition.length === 0 && (
-                    <p className="text-sm text-gray-400 text-center py-4">
-                      No nutrition facts added. Click "+ Add Nutrition" to add
-                      one.
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* TAG SELECTION */}
-              <div>
-                <label className="block font-medium mb-1">Tags</label>
-                <TagAdmin
-                  selectedTags={formData.tags}
-                  onTagsChange={(tags) => setFormData({ ...formData, tags })}
-                />
-              </div>
-
-              <div className="flex justify-between mt-4">
+        {/* Filters Section */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+          <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
+            <div className="flex items-center gap-3">
+              <Filter className="w-5 h-5 text-gray-500" />
+              <h3 className="font-semibold text-gray-700">Filter by Week</h3>
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              {["all", 1, 2, 3, 4, 5, 6].map((week) => (
                 <button
-                  type="submit"
-                  disabled={uploading}
-                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+                  key={week}
+                  onClick={() => setSelectedWeek(week)}
+                  className={`px-5 py-2.5 rounded-xl font-medium transition-all duration-200 ${
+                    selectedWeek === week
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
                 >
-                  {uploading
-                    ? "Uploading..."
-                    : editingId
-                    ? "Save Changes"
-                    : "Create"}
+                  {week === "all" ? "All Weeks" : `Week ${week}`}
                 </button>
-                <button
-                  type="button"
-                  className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
-                  onClick={() => {
-                    setShowForm(false);
-                    setImagePreview(null);
-                  }}
-                  disabled={uploading}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+              ))}
+            </div>
+
+            {/* View Toggle */}
+            <div className="flex gap-2 bg-gray-100 rounded-xl p-1">
+              <button
+                onClick={() => setViewMode("cards")}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all duration-200 ${
+                  viewMode === "cards"
+                    ? "bg-white shadow text-blue-600"
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                <Grid className="w-4 h-4" />
+                Cards
+              </button>
+              <button
+                onClick={() => setViewMode("table")}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all duration-200 ${
+                  viewMode === "table"
+                    ? "bg-white shadow text-blue-600"
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                <Table className="w-4 h-4" />
+                Table
+              </button>
+            </div>
           </div>
         </div>
-      )}
+
+        {/* Stats Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg">
+            <p className="text-sm opacity-90">Total Meals</p>
+            <p className="text-3xl font-bold mt-2">{items.length}</p>
+          </div>
+          <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-lg">
+            <p className="text-sm opacity-90">Current Week ({selectedWeek})</p>
+            <p className="text-3xl font-bold mt-2">{filteredItems.length}</p>
+          </div>
+          <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-2xl p-6 text-white shadow-lg">
+            <p className="text-sm opacity-90">Single Portion</p>
+            <p className="text-3xl font-bold mt-2">
+              {items.filter(item => item.noSplit).length}
+            </p>
+          </div>
+          <div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl p-6 text-white shadow-lg">
+            <p className="text-sm opacity-90">With Nutrition</p>
+            <p className="text-3xl font-bold mt-2">
+              {items.filter(item => item.nutrition && item.nutrition.length > 0).length}
+            </p>
+          </div>
+        </div>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="flex justify-center items-center py-20">
+            <div className="text-center">
+              <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600 font-medium">Loading meals...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Content View */}
+        {!loading && (
+          <>
+            {/* CARD VIEW */}
+            {viewMode === "cards" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredItems.map((item) => (
+                  <CheckoutCard
+                    key={item._id}
+                    item={item}
+                    onEdit={openEditForm}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* TABLE VIEW */}
+            {viewMode === "table" && (
+              <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <CheckoutTable
+                  items={filteredItems}
+                  loading={loading}
+                  error={error}
+                  onEdit={openEditForm}
+                  onDelete={handleDelete}
+                />
+              </div>
+            )}
+
+            {/* Empty State */}
+            {filteredItems.length === 0 && !loading && (
+              <div className="text-center py-20 bg-white rounded-2xl shadow-lg">
+                <div className="w-24 h-24 mx-auto bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center mb-6">
+                  <span className="text-4xl">🍽️</span>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-700 mb-2">
+                  No meals found
+                </h3>
+                <p className="text-gray-500 max-w-md mx-auto mb-6">
+                  {selectedWeek !== "all"
+                    ? `No meals found for Week ${selectedWeek}. Try another week or add new meals.`
+                    : "No meals added yet. Start by adding your first meal!"}
+                </p>
+                <button
+                  onClick={openCreateForm}
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 text-white px-6 py-3 rounded-xl font-medium hover:from-emerald-700 hover:to-teal-600 transition-all duration-200"
+                >
+                  <Plus className="w-5 h-5" />
+                  Add Your First Meal
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* FORM MODAL */}
+        <CheckoutFormModal
+          show={showForm}
+          editingId={editingId}
+          formData={formData}
+          setFormData={setFormData}
+          imagePreview={imagePreview}
+          imagePreview2={imagePreview2}
+          uploading={uploading}
+          handleSubmit={handleSubmit}
+          handleMainImageUpload={handleMainImageUpload}
+          handleNutritionImageUpload={handleNutritionImageUpload}
+          onClose={() => {
+            setShowForm(false);
+            setImagePreview(null);
+            setImagePreview2(null);
+          }}
+        />
+      </div>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import TagAdmin from './page/TagAdmin';
 import Orders from './page/Orders';
 import AdminRecipes from './page/AdminRecipes';
 import Customers from './page/Customers';
+import Dashboard from './page/Dashboard';
 
 const App = () => {
   return (
@@ -19,9 +20,9 @@ const App = () => {
         <Header />
 
         <Routes>
-          <Route path="/" element={<h2>Dashboard</h2>} />
+          <Route path="/" element={<Dashboard />} />
           <Route path="/plans" element={<SelectPlan />} />
-          <Route path="/CheckOut" element={<CheckOut />} />
+          <Route path="/manage-meals" element={<CheckOut />} />
           <Route path="/nutrition-tags" element={<TagAdmin />} />
           <Route path="/orders" element={<Orders />} />
           <Route path='/admin-recipes' element={<AdminRecipes />} />

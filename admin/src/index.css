@@ -17,3 +17,23 @@ input {
   font-family: inherit;
 }
 
+
+.input-field {
+  @apply w-full rounded-xl border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500;
+}
+
+.textarea-field {
+  @apply w-full rounded-xl border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none;
+}
+
+.file-input {
+  @apply w-full text-sm file:mr-4 file:py-2 file:px-4
+         file:rounded-xl file:border-0
+         file:text-sm file:font-medium
+         file:bg-green-50 file:text-green-700
+         hover:file:bg-green-100;
+}
+
+.label {
+  @apply block mb-1 text-sm font-medium text-gray-700;
+}
