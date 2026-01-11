@@ -1,38 +1,47 @@
 import Checkout from "../models/checkout.js";
 // import cloudinary from "../config/cloudinary.js"; // agar delete karna ho
 
-// ===================== CREATE =====================
-export const createCheckout = async (req, res) => {
-  try {
-    const { title, subtitle, nutrition, options, tags } = req.body;
+/* =======================
+   COMMON ARRAY PARSER
+======================= */
+const parseArrayField = (field) => {
+  if (!field) return [];
 
-    // ---------- Parse nutrition ----------
-    let nutritionData = nutrition;
-    if (typeof nutrition === "string") {
-      try {
-        nutritionData = JSON.parse(nutrition);
-      } catch {
-        nutritionData = [];
-      }
-    }
+  if (Array.isArray(field)) return field;
 
-    // ---------- Parse options ----------
-    let optionsData = options;
-    if (typeof options === "string") {
-      optionsData = options
+  if (typeof field === "string") {
+    try {
+      const parsed = JSON.parse(field);
+      return Array.isArray(parsed) ? parsed : [parsed];
+    } catch {
+      return field
         .split(",")
-        .map(opt => opt.trim())
+        .map(v => v.trim())
         .filter(Boolean);
     }
+  }
 
-    // ---------- Parse tags ----------
-    let tagsData = tags;
-    if (typeof tags === "string") {
-      try {
-        tagsData = JSON.parse(tags);
-      } catch {
-        tagsData = [];
-      }
+  return [];
+};
+
+/* =======================
+   CREATE
+======================= */
+export const createCheckout = async (req, res) => {
+  try {
+    const { title, subtitle, nutrition, options, tags, weekNumbers, noSplit } = req.body;
+
+    const nutritionData = parseArrayField(nutrition);
+    const optionsData = parseArrayField(options);
+    const tagsData = parseArrayField(tags);
+    const weekNumbersData = parseArrayField(weekNumbers);
+
+    // Validate at least one week
+    if (weekNumbersData.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one week number is required",
+      });
     }
 
     const itemData = {
@@ -41,6 +50,8 @@ export const createCheckout = async (req, res) => {
       nutrition: nutritionData,
       options: optionsData,
       tags: tagsData,
+      weekNumbers: weekNumbersData,
+      noSplit: Boolean(noSplit),
     };
 
     // ---------- Main image ----------
@@ -48,41 +59,54 @@ export const createCheckout = async (req, res) => {
       itemData.image = req.files.image[0].path;
       itemData.imagePublicId = req.files.image[0].filename;
     } else {
-      return res.status(400).json({ success: false, message: "Image is required" });
+      return res.status(400).json({
+        success: false,
+        message: "Image is required",
+      });
     }
 
     // ---------- Nutrition Value Image ----------
     if (req.files?.nutritionValueImage?.[0]) {
-      itemData.nutritionValueImage = req.files.nutritionValueImage[0].path;
+      itemData.nutritionValueImage =
+        req.files.nutritionValueImage[0].path;
       itemData.nutritionValueImagePublicId =
         req.files.nutritionValueImage[0].filename;
     }
 
     const item = await Checkout.create(itemData);
-    res.status(201).json({ success: true, data: item });
 
+    res.status(201).json({ success: true, data: item });
   } catch (error) {
     console.error("Create checkout error:", error);
     res.status(400).json({ success: false, message: error.message });
   }
 };
 
-// ===================== READ ALL =====================
+/* =======================
+   READ ALL
+======================= */
 export const getCheckouts = async (req, res) => {
   try {
-    const items = await Checkout.find();
+    const items = await Checkout.find().sort({ weekNumbers: 1 });
     res.status(200).json({ success: true, data: items });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ===================== READ BY ID =====================
+/* =======================
+   READ BY ID
+======================= */
 export const getCheckoutById = async (req, res) => {
   try {
     const item = await Checkout.findById(req.params.id);
-    if (!item)
-      return res.status(404).json({ success: false, message: "Not found" });
+
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: "Not found",
+      });
+    }
 
     res.status(200).json({ success: true, data: item });
   } catch (error) {
@@ -90,52 +114,42 @@ export const getCheckoutById = async (req, res) => {
   }
 };
 
-// ===================== UPDATE =====================
+/* =======================
+   UPDATE
+======================= */
 export const updateCheckout = async (req, res) => {
   try {
-    const { title, subtitle, nutrition, options, tags } = req.body;
+    const { title, subtitle, nutrition, options, tags, weekNumbers,noSplit } = req.body;
     const updateData = {};
-
     if (title) updateData.title = title;
     if (subtitle) updateData.subtitle = subtitle;
 
-    // ---------- Nutrition ----------
+    if (noSplit !== undefined) {
+      updateData.noSplit = noSplit;
+    }
     if (nutrition !== undefined) {
-      if (typeof nutrition === "string") {
-        try {
-          updateData.nutrition = JSON.parse(nutrition);
-        } catch {
-          updateData.nutrition = [];
-        }
-      } else {
-        updateData.nutrition = nutrition;
-      }
+      updateData.nutrition = parseArrayField(nutrition);
     }
 
-    // ---------- Options ----------
     if (options !== undefined) {
-      updateData.options =
-        typeof options === "string"
-          ? options.split(",").map(o => o.trim()).filter(Boolean)
-          : options;
+      updateData.options = parseArrayField(options);
     }
 
-    // ---------- Tags ----------
     if (tags !== undefined) {
-      if (typeof tags === "string") {
-        try {
-          updateData.tags = JSON.parse(tags);
-        } catch {
-          updateData.tags = [];
-        }
-      } else {
-        updateData.tags = tags;
-      }
+      updateData.tags = parseArrayField(tags);
+    }
+
+    if (weekNumbers !== undefined) {
+      updateData.weekNumbers = parseArrayField(weekNumbers);
     }
 
     const oldItem = await Checkout.findById(req.params.id);
-    if (!oldItem)
-      return res.status(404).json({ success: false, message: "Not found" });
+    if (!oldItem) {
+      return res.status(404).json({
+        success: false,
+        message: "Not found",
+      });
+    }
 
     // ---------- Update main image ----------
     if (req.files?.image?.[0]) {
@@ -160,37 +174,134 @@ export const updateCheckout = async (req, res) => {
     );
 
     res.status(200).json({ success: true, data: updatedItem });
-
   } catch (error) {
     console.error("Update checkout error:", error);
     res.status(400).json({ success: false, message: error.message });
   }
 };
 
-// ===================== DELETE =====================
+/* =======================
+   DELETE
+======================= */
 export const deleteCheckout = async (req, res) => {
   try {
     const item = await Checkout.findByIdAndDelete(req.params.id);
-    if (!item)
-      return res.status(404).json({ success: false, message: "Not found" });
+
+    if (!item) {
+      return res.status(404).json({
+        success: false,
+        message: "Not found",
+      });
+    }
 
     // cloudinary.uploader.destroy(item.imagePublicId);
     // cloudinary.uploader.destroy(item.nutritionValueImagePublicId);
 
-    res.status(200).json({ success: true, message: "Deleted successfully" });
+    res.status(200).json({
+      success: true,
+      message: "Deleted successfully",
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ===================== FILTER BY TAG =====================
+/* =======================
+   FILTER BY TAG
+======================= */
 export const getCheckoutsTags = async (req, res) => {
   try {
-    const { tag } = req.query;
-    const query = tag && tag !== "All" ? { tags: tag } : {};
+    const { tag, week } = req.query;
+
+    const query = {};
+
+    if (tag && tag !== "All") {
+      query.tags = tag;
+    }
+
+    if (week) {
+      query.weekNumbers = Number(week);
+    }
+
     const items = await Checkout.find(query);
-    res.json({ success: true, data: items });
+
+    res.json({
+      success: true,
+      data: items,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 };
+
+
+/* =======================
+   GET BY WEEK 
+======================= */
+// export const getCheckoutsByWeek = async (req, res) => {
+//   try {
+//     // 1️⃣ Calculate current week from date
+//     const today = new Date();
+//     const dayOfMonth = today.getDate(); // 1–31
+
+//     let currentWeek = Math.ceil(dayOfMonth / 7);
+//     if (currentWeek > 4) currentWeek = 4;
+
+//     let triedWeeks = new Set();
+//     let items = [];
+
+//     while (triedWeeks.size < 4) {
+     
+//       items = await Checkout.find({
+//         weekNumbers: currentWeek, 
+//       }).sort({ createdAt: -1 });
+
+//       if (items.length > 0) break;
+
+//       triedWeeks.add(currentWeek);
+//       currentWeek = currentWeek === 4 ? 1 : currentWeek + 1;
+//     }
+
+//     res.status(200).json({
+//       success: true,
+//       activeWeek: currentWeek,
+//       count: items.length,
+//       data: items,
+//     });
+//   } catch (error) {
+//     console.error("Auto rotating week error:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch checkout items",
+//     });
+//   }
+// };
+export const getCheckoutsByWeek = async (req, res) => {
+  try {
+    const { week } = req.query;
+
+    if (!week) {
+      return res.status(400).json({
+        success: false,
+        message: "Week is required",
+      });
+    }
+
+    const items = await Checkout.find({
+      weekNumbers: Number(week),
+    });
+
+    res.json({
+      success: true,
+      week,
+      data: items,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+

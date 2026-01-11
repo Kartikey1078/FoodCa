@@ -7,6 +7,7 @@ import {
   updateCheckout,
   deleteCheckout,
   getCheckoutsTags,
+  getCheckoutsByWeek
 } from "../controllers/checkout.js";
 
 const router = express.Router();
@@ -20,8 +21,10 @@ const checkoutUpload = upload.fields([
 router.post("/", checkoutUpload, createCheckout);
 router.get("/tags", getCheckoutsTags);
 router.get("/", getCheckouts);
+router.get("/week", getCheckoutsByWeek);
 router.get("/:id", getCheckoutById);
 router.put("/:id", checkoutUpload, updateCheckout);
 router.delete("/:id", deleteCheckout);
+
 
 export default router;

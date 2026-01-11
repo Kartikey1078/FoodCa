@@ -1,8 +1,24 @@
+/* =========================
+   IMPORTS
+========================= */
 import dotenv from "dotenv";
-import cors from "cors";
 import express from "express";
+import cors from "cors";
 import multer from "multer";
+
+/* =========================
+   CONFIG
+========================= */
+dotenv.config();
+
+/* =========================
+   DB
+========================= */
 import connectDB from "./config/db.js";
+
+/* =========================
+   ROUTES
+========================= */
 import itemRoutes from "./routes/itemRoutes.js";
 import SelectPlan from "./routes/select_plan.js";
 import checkoutRoutes from "./routes/checkoutRoutes.js";
@@ -14,23 +30,13 @@ import squareRoutes from "./routes/squareRoutes.js";
 import nutritionFactsRoutes from "./routes/nutritionFactsRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import recipeRoutes from "./routes/recipeRoutes.js";
-import clerkWebhook from "./api/webhooks/clerk.js";
 import userRoutes from "./routes/userRoutes.js";
-/* =========================
-   ENV
-========================= */
-dotenv.config();
+import blogRoutes from "./routes/blogRoutes.js";
 
 /* =========================
-   DB CONNECT (Vercel-safe)
+   WEBHOOK
 ========================= */
-let isDbConnected = false;
-const connectOnce = async () => {
-  if (!isDbConnected) {
-    await connectDB();
-    isDbConnected = true;
-  }
-};
+import clerkWebhook from "./api/webhooks/clerk.js";
 
 /* =========================
    APP INIT
@@ -38,35 +44,48 @@ const connectOnce = async () => {
 const app = express();
 
 /* =========================
+   DB CONNECTION (SERVERLESS SAFE)
+========================= */
+let isConnected = false;
+
+const ensureDB = async () => {
+  if (!isConnected) {
+    await connectDB();
+    isConnected = true;
+    console.log("✅ MongoDB connected");
+  }
+};
+
+/* =========================
    CORS CONFIG
 ========================= */
+const allowedOrigins = [
+  process.env.FRONTEND_ORIGIN,
+  process.env.ADMIN_ORIGIN,
+];
+
 app.use(
   cors({
-    origin: [
-      "https://food-ca.vercel.app",
-      "https://food-ca-hkw4.vercel.app",
-    ],
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("❌ Not allowed by CORS"));
+      }
+    },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "svix-id",
-      "svix-timestamp",
-      "svix-signature",
-    ],
   })
 );
 
 /* =========================
-   WEBHOOKS (Raw Body) - BEFORE JSON PARSER
+   WEBHOOK (RAW BODY)
 ========================= */
 app.post(
   "/api/webhooks/clerk",
   express.raw({ type: "application/json" }),
   clerkWebhook
 );
-
 
 /* =========================
    BODY PARSERS
@@ -75,36 +94,23 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 /* =========================
-   DB MIDDLEWARE (Skip webhooks)
+   DB MIDDLEWARE
 ========================= */
 app.use(async (req, res, next) => {
-  if (req.path.startsWith("/api/webhooks")) {
-    return next(); // skip DB for webhooks
-  }
-
-  try {
-    await connectOnce();
-    next();
-  } catch (err) {
-    console.error("DB connection failed:", err);
-    res.status(500).json({ message: "Database connection error" });
-  }
+  await ensureDB();
+  next();
 });
 
 /* =========================
-   ROUTES
+   BASE ROUTES
 ========================= */
 app.get("/", (req, res) => {
-  res.json({ message: "Backend running on Vercel 🚀" });
+  res.json({ message: "🚀 Backend running on Vercel" });
 });
 
-app.get("/api/cors-test", (req, res) => {
-  res.json({
-    success: true,
-    origin: req.headers.origin,
-  });
-});
-
+/* =========================
+   API ROUTES
+========================= */
 app.use("/api/items", itemRoutes);
 app.use("/api/plans", SelectPlan);
 app.use("/api/checkout", checkoutRoutes);
@@ -117,6 +123,7 @@ app.use("/api/nutrition-facts", nutritionFactsRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/recipes", recipeRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/blogs", blogRoutes);
 
 /* =========================
    ERROR HANDLER
@@ -131,13 +138,13 @@ app.use((err, req, res, next) => {
     });
   }
 
-  res.status(err?.status || 500).json({
+  res.status(err.status || 500).json({
     success: false,
-    message: err?.message || "Internal Server Error",
+    message: err.message || "Internal Server Error",
   });
 });
 
 /* =========================
-   EXPORT FOR VERCEL
+   EXPORT (NO app.listen)
 ========================= */
 export default app;

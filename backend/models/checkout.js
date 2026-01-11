@@ -44,6 +44,18 @@ const checkOutSchema = new mongoose.Schema({
    nutritionValueImagePublicId: {
     type: String,
    },
+   weekNumbers: {
+    type: [Number],         
+    required: true,
+    validate: {
+      validator: (arr) => arr.length > 0,
+      message: "At least one week number is required",
+    },
+  },
+  noSplit: {
+    type: Boolean,
+    default: false, 
+  },
 }, {
   timestamps: true,
 });

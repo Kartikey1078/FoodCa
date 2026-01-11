@@ -77,8 +77,6 @@ export const getOrders = async (req, res) => {
   }
 };
 
-
-
 // GET ORDER BY ID
 export const getOrderById = async (req, res) => {
   try {
@@ -108,4 +106,63 @@ export const updateOrderStatus = async (req, res) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
+
+// total orders count
+export const getTotalOrdersCount = async (req,res) =>{
+  try {
+    const totalOrders = await Order.countDocuments();
+    res.json({success:true,totalOrders});
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+// total revenue 
+export const getTotalRevenue = async (req,res) =>{
+  try {
+    const result = await Order.aggregate([
+      {
+        $group: {
+          _id:null,
+          totalRevenue:{$sum:"$grandTotal"}
+          
+        }
+      }
+    ])
+    res.json({
+      success:true,
+      totalRevenue: result[0]?.totalRevenue || 0
+    })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+
+// today order 
+export const getTodayOrders = async (req, res) => {
+  try {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    const orders = await Order.find({
+      createdAt: {
+        $gte: startOfToday,
+        $lte: endOfToday,
+      },
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      orders,           // empty array if none
+      count: orders.length,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 

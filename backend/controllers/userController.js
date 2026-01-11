@@ -10,27 +10,35 @@ export const getUsers = async (req, res) => {
     const limit = Number(req.query.limit) || 8;
     const search = req.query.search || "";
 
-    const query = {
-      $or: [
-        { fullName: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-      ],
-    };
+    // 🔍 Search query (only apply when search exists)
+    const query = search
+      ? {
+          $or: [
+            { fullName: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
 
-    const total = await User.countDocuments(query);
+    // 📊 Counts
+    const totalUsers = await User.countDocuments();        // ALL users
+    const filteredTotal = await User.countDocuments(query); // Search-based users
 
+    // 📄 Paginated users
     const users = await User.find(query)
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
 
+    // ✅ Response
     res.json({
       success: true,
       users,
       pagination: {
-        total,
+        totalUsers,                    // total users in DB
+        filteredTotal,                 // users after search
         page,
-        pages: Math.ceil(total / limit),
+        pages: Math.ceil(filteredTotal / limit),
       },
     });
   } catch (err) {
